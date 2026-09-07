@@ -77,6 +77,3 @@ node --check js/conferencia-remessa.js
 ## Licenca
 
 Este projeto esta licenciado sob a [Licenca MIT](LICENSE).
-
-
-oi som oi som 
