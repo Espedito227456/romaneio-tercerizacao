@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conferência de Remessas</title>
+    <link rel="stylesheet" href="css/conferencia-remessa.css">
+</head>
+
+<body class="pagina-conferencia">
+
+<header>
+    <h1>📦 Conferência de Remessas</h1>
+</header>
+
+
+<div class="container">
+
+    <a class="btn-gray botao-conferencia" href="index.html">Voltar para importar remessa</a>
+
+    <!-- BUSCA DA REMESSA -->
+
+    <div class="card">
+
+        <h2>🔎 Buscar Remessa</h2>
+
+        <input
+            id="campoRemessa"
+            type="text"
+            placeholder="Digite o número da remessa"
+        >
+
+        <button onclick="buscarRemessa()">
+            🔍 BUSCAR
+        </button>
+
+        <div id="mensagemErro" class="erro"></div>
+
+    </div>
+
+
+    <!-- INFORMAÇÕES DA REMESSA -->
+
+    <div id="areaRemessa" class="hidden">
+
+        <div class="card">
+
+            <h2>
+                📦 Remessa
+                <span id="numeroRemessa"></span>
+            </h2>
+
+            <p>
+                Semana:
+                <strong id="semanaRemessa"></strong>
+            </p>
+
+            <p>
+                Data:
+                <strong id="dataRemessa"></strong>
+            </p>
+
+            <div id="statusRemessa"></div>
+
+
+            <div class="info-grid">
+
+                <div class="info-box">
+                    <span>Total</span>
+                    <strong id="total"></strong>
+                </div>
+
+                <div class="info-box">
+                    <span>Conferidas</span>
+                    <strong id="conferidas"></strong>
+                </div>
+
+                <div class="info-box">
+                    <span>Pendentes</span>
+                    <strong id="pendentes"></strong>
+                </div>
+
+                <div class="info-box">
+                    <span>Progresso</span>
+                    <strong id="porcentagem"></strong>
+                </div>
+
+            </div>
+
+
+            <div class="progress-container">
+
+                <div class="progress">
+
+                    <div
+                        id="barraProgresso"
+                        class="progress-bar">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <br>
+
+            <button
+                class="btn-gray"
+                onclick="novaBusca()">
+
+                🔄 Nova busca
+
+            </button>
+
+        </div>
+
+
+        <!-- LISTA DE PEÇAS -->
+
+        <div class="card">
+
+            <h2>🔎 Peças</h2>
+
+            <input
+                id="campoPeca"
+                type="text"
+                placeholder="Buscar peça pelo código ou nome"
+                oninput="filtrarPecas()"
+            >
+
+            <div id="listaPecas"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- MODAL DE FOTOS -->
+
+<div
+    id="modalFotos"
+    class="modal hidden">
+
+    <div class="modal-box">
+
+        <div class="modal-top">
+
+            <h2 id="tituloFotos">
+                📷 Fotos
+            </h2>
+
+            <button
+                class="btn-gray"
+                onclick="fecharFotos()">
+
+                ✕
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="listaFotos"
+            class="foto-grid">
+        </div>
+
+
+        <!-- INPUT DA CÂMERA -->
+
+        <input
+            id="campoFoto"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onchange="adicionarFoto(event)"
+        >
+
+
+        <button
+            class="btn-green btn-add-foto"
+            onclick="abrirCamera()">
+
+            📷 ADICIONAR FOTO
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script src="js/conferencia-remessa.js?v=20260906-2"></script>
+
+</body>
+</html>

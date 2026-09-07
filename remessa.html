@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/remessa.css"><title>Conferência da Remessa</title>
+</head>
+<body>
+  <div class="container">
+    <a class="botao-voltar" href="index.html">Voltar para importar remessa</a>
+    <h1>Conferência de Remessa</h1><p class="subtitulo">Confira as peças da remessa abaixo.</p>
+    <div id="selecaoRemessa" class="selecao-remessa">
+      <h2>Localizar remessa</h2>
+      <p class="subtitulo">Digite o número da remessa para iniciar a conferência.</p>
+      <label for="numeroBusca">Número da remessa</label>
+      <div class="busca-remessa"><input id="numeroBusca" type="text" autocomplete="off" placeholder="Ex.: REMESSA 017873"><button id="buscarRemessa" type="button">Abrir remessa</button></div>
+      <p id="mensagemBusca" class="mensagem" aria-live="polite"></p>
+    </div>
+
+    <div id="modalRemessaConcluida" class="modal-remessa" hidden>
+      <div class="modal-remessa-conteudo" role="dialog" aria-modal="true" aria-labelledby="tituloRemessaConcluida">
+        <button id="fecharModalRemessa" class="fechar-modal" type="button" aria-label="Fechar">&times;</button>
+        <h2 id="tituloRemessaConcluida">Remessa já concluída</h2>
+        <p id="mensagemRemessaConcluida"></p>
+        <a id="consultarRemessaConcluida" class="botao-consultar-concluida" href="conferencia-remessa.html">Consultar conferência</a>
+      </div>
+    </div>
+
+    <div id="conteudoRemessa" hidden>
+    <div class="informacoes">
+      <div class="card"><span>Remessa</span><strong id="numeroRemessa">—</strong></div><div class="card"><span>Semana</span><strong id="semanaRemessa">—</strong></div><div class="card"><span>Serviço</span><strong id="tipoServico">—</strong></div><div class="card"><span>Produto</span><strong id="produtoRemessa">—</strong></div><div class="card"><span>Total de peças</span><strong id="totalPecas">0</strong></div><div class="card"><span>Kg conferidos</span><strong id="pesoTotal">0 kg</strong></div><div class="card"><span>Encontradas</span><strong id="totalEncontradas">0</strong></div><div class="card"><span>Faltantes</span><strong id="totalFaltantes">0</strong></div><div class="card"><span>Progresso</span><strong id="progresso">0%</strong></div>
+    </div>
+    <p id="avisoSemRemessa" class="aviso-sem-remessa" hidden>Não há uma remessa carregada neste aparelho. <a href="index.html">Importar remessa</a></p>
+    <div class="conferencia">
+      <h2>Conferir peça</h2><p class="subtitulo">Digite o código da peça. Depois informe a quantidade encontrada, adicione de 1 a 5 fotos novas e envie a conferência.</p>
+      <div class="leitura-manual"><label for="codigoManual">Código da peça</label><div class="campo-com-acao"><input id="codigoManual" type="text" autocomplete="off" placeholder="Digite ou use o leitor" disabled><button id="buscarCodigo" type="button" disabled>Buscar código</button></div></div>
+      <p id="resultadoCodigo" class="resultado-codigo" aria-live="polite"></p>
+      <div id="formularioPeca" hidden>
+        <div class="quantidade-conferencia"><label for="quantidadeEncontrada">Quantidade encontrada</label><input id="quantidadeEncontrada" type="number" min="1" step="1" inputmode="numeric" placeholder="Digite a quantidade" disabled><span id="limiteQuantidade"></span></div>
+        <div class="evidencia-conferencia"><span class="rotulo-fotos">Fotos da evidência</span><label class="botao-adicionar-foto" for="fotoConferencia">+<span>Adicionar foto</span><input id="fotoConferencia" type="file" accept="image/*" capture="environment" disabled></label><span id="contadorFotos">0/5 nesta conferência</span><div class="fotos-conferencia" id="fotosConferencia"></div></div>
+        <button id="enviarConferencia" class="botao-enviar" type="button" disabled>Enviar conferência</button>
+      </div>
+      <p id="mensagemLeitura" class="mensagem" aria-live="polite"></p>
+    </div>
+    <div class="tabela-container"><h2>Peças da remessa</h2><table><thead><tr><th>Código</th><th>Descrição</th><th>Quantidade</th><th>Total em kg</th><th>Encontrado</th><th>Faltante</th><th>Status</th><th>Evidências acumuladas</th></tr></thead><tbody></tbody></table></div>
+      <div class="acoes-remessa">
+        <a id="selecionarNovaRemessa" class="botao-voltar botao-selecionar-remessa" href="remessa.html?nova=1" onclick="sessionStorage.removeItem('remessaAtiva')">Selecionar Remessa</a>
+        <a class="botao-voltar botao-selecionar-remessa" href="conferencia-remessa.html">Consultar fotos</a>
+        <div class="finalizar"><button class="botao-finalizar" disabled>Finalizar Remessa</button></div>
+      </div>
+  </div>
+  <script src="js/remessa.js?v=20260906-7"></script>
+</body>
+</html>

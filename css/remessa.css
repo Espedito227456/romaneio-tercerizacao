@@ -1,0 +1,469 @@
+* {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 40px auto;
+        }
+
+        .botao-voltar {
+            display: inline-block;
+            margin-bottom: 18px;
+            color: #1d4ed8;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .botao-voltar:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtitulo {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .selecao-remessa {
+            max-width: 620px;
+            margin: 35px auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .selecao-remessa h2 {
+            margin-bottom: 12px;
+        }
+
+        .modal-remessa {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.58);
+        }
+
+        .modal-remessa[hidden] {
+            display: none;
+        }
+
+        .modal-remessa-conteudo {
+            position: relative;
+            width: min(100%, 440px);
+            padding: 28px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.25);
+            text-align: center;
+        }
+
+        .modal-remessa-conteudo h2 {
+            margin-bottom: 12px;
+            color: #1e3a8a;
+        }
+
+        .modal-remessa-conteudo p {
+            margin-bottom: 22px;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .fechar-modal {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            width: 36px;
+            min-height: 36px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font-size: 28px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .botao-consultar-concluida {
+            display: inline-block;
+            min-height: 44px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .botao-consultar-concluida:hover {
+            background: #1d4ed8;
+        }
+
+        .busca-remessa {
+            display: flex;
+            gap: 10px;
+        }
+
+        .busca-remessa input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .busca-remessa button {
+            padding: 12px 16px;
+            border: 0;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        /* Informações da remessa */
+
+        .informacoes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card span {
+            display: block;
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .card strong {
+            font-size: 24px;
+        }
+
+        /* Área de conferência */
+
+        .conferencia {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .conferencia h2 {
+            margin-bottom: 15px;
+        }
+
+        .botao-camera {
+            background-color: #222;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .botao-camera:hover {
+            background-color: #444;
+        }
+
+        .leitura-manual {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+            margin: 16px 0;
+        }
+
+        .leitura-manual label { display: block; font-weight: bold; }
+        .leitura-manual input { flex: 1; padding: 12px; border: 1px solid #bbb; border-radius: 6px; font-size: 16px; }
+        .leitura-manual button, .camera-area button { padding: 12px 16px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
+        .campo-com-acao { display: flex; gap: 10px; }
+        .campo-com-acao button { white-space: nowrap; }
+        .resultado-codigo { min-height: 20px; text-align: left; }
+        .quantidade-conferencia { display: flex; align-items: end; gap: 12px; margin: 18px 0; }
+        .quantidade-conferencia label, .evidencia-conferencia .rotulo-fotos { font-weight: bold; }
+        .quantidade-conferencia input { width: 180px; padding: 12px; border: 1px solid #bbb; border-radius: 6px; font-size: 16px; }
+        #limiteQuantidade { color: #666; font-size: 14px; }
+        .evidencia-conferencia { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+        .botao-adicionar-foto { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; font-weight: bold; }
+        .botao-adicionar-foto > span:first-child { font-size: 21px; line-height: 16px; }
+        .botao-adicionar-foto input { display: none; }
+        .fotos-conferencia { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+        .botao-enviar { width: auto; min-width: 180px; padding: 13px 20px; margin-top: 8px; border: 0; border-radius: 6px; background: #15803d; color: #fff; font-size: 16px; cursor: pointer; }
+        .botao-enviar:disabled { background: #aaa; cursor: not-allowed; }
+        .mensagem { margin-top: 14px; color: #166534; }
+        .mensagem.erro { color: #b91c1c; }
+        .aviso-sem-remessa { margin: 16px 0; padding: 14px; background: #fff7ed; color: #9a3412; border: 1px solid #fdba74; border-radius: 6px; text-align: left; }
+        .aviso-sem-remessa a { color: #1d4ed8; font-weight: bold; }
+        .camera-area { margin-top: 16px; max-width: 480px; }
+        .camera-area video { width: 100%; background: #111; border-radius: 8px; }
+        .camera-area button { margin-top: 8px; background: #444; }
+
+        /* Tabela */
+
+        .tabela-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f1f1f1;
+        }
+
+        .pendente {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .parcial {
+            color: #ef8f00;
+            font-weight: bold;
+        }
+
+        .conferida {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .botao-fotos {
+            display: inline-block;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .botao-fotos:has(input:disabled) {
+            background: #64748b;
+            cursor: not-allowed;
+        }
+
+        button,
+        .botao-camera,
+        .botao-adicionar-foto,
+        .botao-enviar,
+        .botao-finalizar,
+        .botao-fotos,
+        .botao-voltar,
+        .botao-selecionar-remessa,
+        .leitura-manual button,
+        .campo-com-acao button,
+        .busca-remessa button,
+        .camera-area button {
+            min-height: 44px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        button:hover,
+        .botao-camera:hover,
+        .botao-adicionar-foto:hover,
+        .botao-enviar:hover,
+        .botao-finalizar:hover,
+        .botao-fotos:hover,
+        .botao-voltar:hover,
+        .busca-remessa button:hover {
+            background: #1d4ed8;
+        }
+
+        .entrada-fotos {
+            display: none;
+        }
+
+        .miniaturas-evidencia {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .miniatura-evidencia {
+            width: 42px;
+            height: 42px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Botão finalizar */
+
+        .acoes-remessa {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 25px;
+        }
+
+        .botao-selecionar-remessa {
+            display: inline-block;
+            margin: 0;
+            padding: 14px 25px;
+            border-radius: 6px;
+            background-color: #2563eb;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .botao-selecionar-remessa:hover {
+            background-color: #1d4ed8;
+            text-decoration: none;
+        }
+
+        .finalizar {
+            margin-top: 0;
+            text-align: right;
+        }
+
+        .botao-finalizar {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 6px;
+            background-color: #aaa;
+            color: white;
+            font-size: 16px;
+            cursor: not-allowed;
+        }
+
+        .botao-finalizar.ativo { background-color: #15803d; cursor: pointer; }
+
+        @media (max-width: 700px) {
+
+            body {
+                font-size: 15px;
+            }
+
+            .informacoes {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .container {
+                width: 95%;
+                margin: 20px auto;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .card {
+                padding: 14px;
+            }
+
+            .card strong {
+                font-size: 19px;
+                overflow-wrap: anywhere;
+            }
+
+            .conferencia,
+            .tabela-container {
+                padding: 16px;
+            }
+
+            .botao-camera {
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            .selecao-remessa {
+                padding: 16px;
+            }
+
+            .busca-remessa {
+                display: block;
+            }
+
+            .busca-remessa input,
+            .busca-remessa button {
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            th,
+            td {
+                padding: 10px;
+                font-size: 14px;
+                vertical-align: top;
+            }
+
+            table {
+                min-width: 900px;
+            }
+
+            .leitura-manual { display: block; }
+            .leitura-manual input, .leitura-manual button { width: 100%; margin-top: 8px; }
+            .campo-com-acao { display: block; }
+            .quantidade-conferencia { display: block; }
+            .quantidade-conferencia input { width: 100%; margin-top: 8px; }
+            .botao-enviar { width: 100%; }
+
+            .acoes-remessa,
+            .finalizar,
+            .botao-finalizar {
+                width: 100%;
+            }
+
+            .acoes-remessa {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .botao-selecionar-remessa,
+            .botao-finalizar {
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
+        }

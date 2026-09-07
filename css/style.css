@@ -1,0 +1,126 @@
+ body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .botao-index {
+            flex: 0 1 auto;
+            min-width: 0;
+            display: inline-block;
+            min-height: 40px;
+            margin-bottom: 18px;
+            margin-top: 50px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            text-decoration: none;
+            text-align: center;
+            white-space: normal;
+        }
+
+        .links-navegacao {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 16px;
+        }
+
+        .pagina-index button,
+        .botao-index {
+            min-height: 44px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .pagina-index button:hover,
+        .botao-index:hover {
+            background: #1d4ed8;
+            color: #fff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p {
+            text-align: center;
+            color: #666;
+        }
+
+        .campo {
+            margin-top: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #arquivoSelecionado {
+            margin-top: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        .ajuda {
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 16px;
+            }
+
+            .container {
+                margin: 24px auto;
+                padding: 22px 18px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            button {
+                min-height: 48px;
+            }
+
+        }
