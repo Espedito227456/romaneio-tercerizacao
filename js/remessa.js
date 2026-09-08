@@ -2,11 +2,16 @@ let remessas = [];
 let remessa = null;
 let pecaAtiva = null;
 let fotosPendentes = [];
+let envioEmAndamento = false;
 const chaveRemessaAtiva = "remessaAtiva";
 
 const canalTempoReal = new EventSource("/api/tempo-real");
-canalTempoReal.addEventListener("remessa:atualizada", evento => receberAtualizacaoTempoReal(JSON.parse(evento.data)));
-canalTempoReal.addEventListener("remessa:criada", evento => { try { carregarRemessas(); } catch (_) {} });
+canalTempoReal.addEventListener("remessa:atualizada", evento => {
+  try { receberAtualizacaoTempoReal(JSON.parse(evento.data)); } catch (_) {}
+});
+canalTempoReal.addEventListener("remessa:criada", () => {
+  carregarRemessas().catch(() => mensagemBusca("Não foi possível atualizar as remessas.", true));
+});
 
 const numeroBusca = document.getElementById("numeroBusca");
 const codigoManual = document.getElementById("codigoManual");
@@ -75,7 +80,8 @@ function abrirRemessa(encontrada) {
   codigoManual.disabled = false;
   buscarCodigo.disabled = false;
   atualizarTela();
-  codigoManual.focus();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  window.scrollTo(0, 0);
 }
 
 function restaurarRemessaAtiva() {
@@ -166,31 +172,58 @@ function atualizarEstadoEnvio() {
 }
 
 async function enviarConferencia() {
+  if (envioEmAndamento || !remessa || !pecaAtiva) {
+    return mensagem("Busque um código antes de enviar a conferência.", true);
+  }
   const quantidade = Number(quantidadeEncontrada.value);
   const faltante = pecaAtiva.quantidade - pecaAtiva.encontrada;
+  const codigoPeca = pecaAtiva.codigo;
+  const remessaDoEnvio = remessa;
+  const pecaDoEnvio = pecaAtiva;
   if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > faltante) return mensagem("Informe uma quantidade entre 1 e " + faltante + ".", true);
   if (!fotosPendentes.length) return mensagem("Adicione pelo menos 1 foto nesta conferência.", true);
   const botaoEnviar = document.getElementById("enviarConferencia");
+  envioEmAndamento = true;
   botaoEnviar.disabled = true;
   mensagem("Comprimindo fotos...");
+  let fotosComprimidas;
   try {
-    const fotosComprimidas = await Promise.all(fotosPendentes.map(comprimirFoto));
-    pecaAtiva.encontrada += quantidade;
-    pecaAtiva.fotos = [...(pecaAtiva.fotos || []), ...fotosComprimidas];
-    if (!await salvar()) {
-      mensagem("Não foi possível salvar a conferência.", true);
-      atualizarEstadoEnvio();
-      return;
-    }
-    atualizarTela();
-    mensagem("Conferência enviada: " + quantidade + " unidade(s) debitada(s) do código " + pecaAtiva.codigo + ".");
-    limparPecaAtiva();
-    codigoManual.value = "";
-    codigoManual.focus();
+    fotosComprimidas = await Promise.all([...fotosPendentes].map(comprimirFoto));
   } catch (_) {
-    mensagem("Não foi possível comprimir as fotos.", true);
+    mensagem("Não foi possível preparar as fotos. Tente selecionar a foto novamente.", true);
+    envioEmAndamento = false;
     atualizarEstadoEnvio();
+    return;
   }
+
+  if (remessa !== remessaDoEnvio || pecaAtiva !== pecaDoEnvio) {
+    envioEmAndamento = false;
+    mensagem("A remessa foi atualizada. Localize o código novamente antes de enviar.", true);
+    atualizarEstadoEnvio();
+    return;
+  }
+
+  const encontradaAnterior = pecaDoEnvio.encontrada;
+  const fotosAnteriores = [...(pecaDoEnvio.fotos || [])];
+  pecaDoEnvio.encontrada += quantidade;
+  pecaDoEnvio.fotos = [...fotosAnteriores, ...fotosComprimidas];
+  if (!await salvar()) {
+    if (remessa === remessaDoEnvio && pecaAtiva === pecaDoEnvio) {
+      pecaDoEnvio.encontrada = encontradaAnterior;
+      pecaDoEnvio.fotos = fotosAnteriores;
+    }
+    envioEmAndamento = false;
+    mensagem("Não foi possível salvar a conferência. Verifique a conexão e tente novamente.", true);
+    atualizarEstadoEnvio();
+    return;
+  }
+
+  atualizarTela();
+  mensagem("Conferência enviada: " + quantidade + " unidade(s) debitada(s) do código " + codigoPeca + ".");
+  limparPecaAtiva();
+  codigoManual.value = "";
+  codigoManual.focus();
+  envioEmAndamento = false;
 }
 
 function limparPecaAtiva() {
@@ -231,6 +264,7 @@ function receberAtualizacaoTempoReal(atualizada) {
   if (indice < 0) return;
   remessas[indice] = atualizada;
   if (!remessa || String(remessa.id || remessa.numero) !== String(atualizada.id)) return;
+  if (envioEmAndamento) return;
   const codigoAtivo = pecaAtiva?.codigo;
   remessa = atualizada;
   if (codigoAtivo) {
@@ -251,6 +285,7 @@ function receberAtualizacaoTempoReal(atualizada) {
 }
 
 function atualizarTela() {
+  if (!remessa) return;
   const total = remessa.pecas.reduce((soma, peca) => soma + peca.quantidade, 0);
   const encontradas = remessa.pecas.reduce((soma, peca) => soma + peca.encontrada, 0);
   const pesoConferido = remessa.pecas.reduce((soma, peca) => soma + (peca.quantidade ? peca.pesoKg * peca.encontrada / peca.quantidade : 0), 0);
@@ -271,6 +306,7 @@ function atualizarTela() {
 }
 
 function finalizarRemessa() {
+  if (!remessa || envioEmAndamento) return;
   const total = remessa.pecas.reduce((soma, peca) => soma + peca.quantidade, 0);
   const encontradas = remessa.pecas.reduce((soma, peca) => soma + peca.encontrada, 0);
   if (encontradas !== total) return;
@@ -295,8 +331,12 @@ function comprimirFoto(dataUrl) {
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(imagem.naturalWidth * escala));
       canvas.height = Math.max(1, Math.round(imagem.naturalHeight * escala));
-      canvas.getContext("2d").drawImage(imagem, 0, 0, canvas.width, canvas.height);
-      resolver(canvas.toDataURL("image/jpeg", 0.72));
+      const contexto = canvas.getContext("2d");
+      if (!contexto) return rejeitar(new Error("Canvas indisponível."));
+      contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+      const fotoComprimida = canvas.toDataURL("image/jpeg", 0.72);
+      if (!fotoComprimida.startsWith("data:image/")) return rejeitar(new Error("Formato de imagem inválido."));
+      resolver(fotoComprimida);
     };
     imagem.onerror = rejeitar;
     imagem.src = dataUrl;

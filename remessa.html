@@ -4,15 +4,21 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="css/remessa.css"><title>Conferência da Remessa</title>
 </head>
-<body>
+<body class="pagina-remessa">
+  <header class="cabecalho-operador">
+    <div class="identidade-sistema">
+      <img class="logo-agi" src="assets/agi-logo.svg?v=1" alt="AGI Brasil">
+      <div></div>
+    </div>
+  </header>
   <div class="container">
-    <a class="botao-voltar" href="index.html">Voltar para importar remessa</a>
     <h1>Conferência de Remessa</h1><p class="subtitulo">Confira as peças da remessa abaixo.</p>
     <div id="selecaoRemessa" class="selecao-remessa">
       <h2>Localizar remessa</h2>
       <p class="subtitulo">Digite o número da remessa para iniciar a conferência.</p>
       <label for="numeroBusca">Número da remessa</label>
       <div class="busca-remessa"><input id="numeroBusca" type="text" autocomplete="off" placeholder="Ex.: REMESSA 017873"><button id="buscarRemessa" type="button">Abrir remessa</button></div>
+      <a class="botao-voltar botao-voltar-importacao" href="index.html">Voltar para importar remessa</a>
       <p id="mensagemBusca" class="mensagem" aria-live="polite"></p>
     </div>
 

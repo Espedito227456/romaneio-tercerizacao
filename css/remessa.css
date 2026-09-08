@@ -10,6 +10,26 @@
             color: #333;
         }
 
+        .pagina-remessa .cabecalho-operador {
+            min-height: 84px;
+            padding: 16px 24px;
+            background: #0d1820;
+            color: #fff;
+        }
+
+        .pagina-remessa .identidade-sistema {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .pagina-remessa .logo-agi {
+            display: block;
+            width: min(304px, 100%);
+            height: 54px;
+            object-fit: contain;
+        }
+
         .container {
             width: 90%;
             max-width: 1200px;
@@ -19,7 +39,7 @@
         .botao-voltar {
             display: inline-block;
             margin-bottom: 18px;
-            color: #1d4ed8;
+            color: #056331;
             font-weight: bold;
             text-decoration: none;
         }
@@ -105,14 +125,14 @@
             min-height: 44px;
             padding: 12px 16px;
             border-radius: 6px;
-            background: #2563eb;
+            background: #08783d;
             color: #fff;
             font-weight: bold;
             text-decoration: none;
         }
 
         .botao-consultar-concluida:hover {
-            background: #1d4ed8;
+            background: #056331;
         }
 
         .busca-remessa {
@@ -133,7 +153,7 @@
             padding: 12px 16px;
             border: 0;
             border-radius: 6px;
-            background: #2563eb;
+            background: #08783d;
             color: #fff;
             cursor: pointer;
         }
@@ -202,7 +222,7 @@
 
         .leitura-manual label { display: block; font-weight: bold; }
         .leitura-manual input { flex: 1; padding: 12px; border: 1px solid #bbb; border-radius: 6px; font-size: 16px; }
-        .leitura-manual button, .camera-area button { padding: 12px 16px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
+        .leitura-manual button, .camera-area button { padding: 12px 16px; border: 0; border-radius: 6px; background: #08783d; color: #fff; cursor: pointer; }
         .campo-com-acao { display: flex; gap: 10px; }
         .campo-com-acao button { white-space: nowrap; }
         .resultado-codigo { min-height: 20px; text-align: left; }
@@ -211,7 +231,7 @@
         .quantidade-conferencia input { width: 180px; padding: 12px; border: 1px solid #bbb; border-radius: 6px; font-size: 16px; }
         #limiteQuantidade { color: #666; font-size: 14px; }
         .evidencia-conferencia { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
-        .botao-adicionar-foto { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; font-weight: bold; }
+        .botao-adicionar-foto { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 6px; background: #08783d; color: #fff; cursor: pointer; font-weight: bold; }
         .botao-adicionar-foto > span:first-child { font-size: 21px; line-height: 16px; }
         .botao-adicionar-foto input { display: none; }
         .fotos-conferencia { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
@@ -220,7 +240,7 @@
         .mensagem { margin-top: 14px; color: #166534; }
         .mensagem.erro { color: #b91c1c; }
         .aviso-sem-remessa { margin: 16px 0; padding: 14px; background: #fff7ed; color: #9a3412; border: 1px solid #fdba74; border-radius: 6px; text-align: left; }
-        .aviso-sem-remessa a { color: #1d4ed8; font-weight: bold; }
+        .aviso-sem-remessa a { color: #056331; font-weight: bold; }
         .camera-area { margin-top: 16px; max-width: 480px; }
         .camera-area video { width: 100%; background: #111; border-radius: 8px; }
         .camera-area button { margin-top: 8px; background: #444; }
@@ -271,7 +291,7 @@
             display: inline-block;
             padding: 8px 10px;
             border-radius: 6px;
-            background: #2563eb;
+            background: #08783d;
             color: white;
             cursor: pointer;
             font-size: 13px;
@@ -298,7 +318,7 @@
             min-height: 44px;
             padding: 12px 16px;
             border-radius: 6px;
-            background: #2563eb;
+            background: #08783d;
             color: #fff;
             font-size: 16px;
             font-weight: bold;
@@ -312,7 +332,7 @@
         .botao-fotos:hover,
         .botao-voltar:hover,
         .busca-remessa button:hover {
-            background: #1d4ed8;
+            background: #056331;
         }
 
         .entrada-fotos {
@@ -349,7 +369,7 @@
             margin: 0;
             padding: 14px 25px;
             border-radius: 6px;
-            background-color: #2563eb;
+            background-color: #08783d;
             color: #fff;
             font-size: 16px;
             font-weight: bold;
@@ -357,7 +377,7 @@
         }
 
         .botao-selecionar-remessa:hover {
-            background-color: #1d4ed8;
+            background-color: #056331;
             text-decoration: none;
         }
 
@@ -383,6 +403,96 @@
             body {
                 font-size: 15px;
             }
+
+            /* Interface operacional inspirada no fluxo mobile de conferência. */
+            .pagina-remessa {
+                min-height: 100vh;
+                background: #eef0f0;
+            }
+
+            .pagina-remessa .container {
+                width: min(100% - 32px, 980px);
+                margin: 28px auto 48px;
+            }
+
+            .pagina-remessa h1 {
+                color: #172026;
+            }
+
+            .pagina-remessa .subtitulo {
+                color: #59656b;
+            }
+
+            .pagina-remessa .selecao-remessa,
+            .pagina-remessa .conferencia,
+            .pagina-remessa .tabela-container,
+            .pagina-remessa .card {
+                border-radius: 6px;
+                box-shadow: none;
+            }
+
+            .pagina-remessa .selecao-remessa {
+                border: 1px solid #d9dddd;
+            }
+
+            .pagina-remessa .botao-voltar-importacao {
+                display: block;
+                width: 100%;
+                margin: 10px 0 0;
+                text-align: center;
+                text-decoration: none;
+            }
+
+            .pagina-remessa button:not(.botao-finalizar),
+            .pagina-remessa .botao-adicionar-foto,
+            .pagina-remessa .botao-enviar,
+            .pagina-remessa .botao-voltar,
+            .pagina-remessa .botao-consultar-concluida,
+            .pagina-remessa .botao-selecionar-remessa,
+            .pagina-remessa .busca-remessa button,
+            .pagina-remessa .leitura-manual button,
+            .pagina-remessa .campo-com-acao button {
+                background: #08783d;
+                border-radius: 5px;
+            }
+
+            .pagina-remessa .botao-finalizar {
+                border-radius: 5px;
+            }
+
+            .pagina-remessa button:not(.botao-finalizar):hover,
+            .pagina-remessa .botao-adicionar-foto:hover,
+            .pagina-remessa .botao-enviar:hover,
+            .pagina-remessa .botao-voltar:hover,
+            .pagina-remessa .botao-consultar-concluida:hover,
+            .pagina-remessa .botao-selecionar-remessa:hover,
+            .pagina-remessa .botao-finalizar.ativo:hover,
+            .pagina-remessa .busca-remessa button:hover,
+            .pagina-remessa .leitura-manual button:hover,
+            .pagina-remessa .campo-com-acao button:hover {
+                background: #056331;
+            }
+
+            .pagina-remessa input {
+                min-height: 48px;
+                border-color: #c8cece;
+                border-radius: 5px;
+            }
+
+            .pagina-remessa .informacoes {
+                gap: 10px;
+            }
+
+            .pagina-remessa .card {
+                border: 1px solid #d9dddd;
+            }
+
+            .pagina-remessa .conferencia h2,
+            .pagina-remessa .tabela-container h2 {
+                color: #172026;
+            }
+
+
 
             .informacoes {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -467,3 +577,14 @@
                 text-align: center;
             }
         }
+
+@media (max-width: 700px) {
+    .pagina-remessa .cabecalho-operador {
+        min-height: 0;
+        padding: 12px 16px 14px;
+    }
+
+    .pagina-remessa .identidade-sistema {
+        width: 100%;
+    }
+}

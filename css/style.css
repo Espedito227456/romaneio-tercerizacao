@@ -1,17 +1,86 @@
  body {
             font-family: Arial, sans-serif;
-            background: #f4f6f8;
+     background: #ffffff;
             margin: 0;
-            padding: 40px;
+     padding: 0;
         }
+
+ .cabecalho-operador {
+     position: relative;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 18px;
+     min-height: 84px;
+     padding: 16px 24px;
+     background: #0d1820;
+     color: #fff;
+ }
+
+ .identidade-sistema {
+     position: absolute;
+     left: 50%;
+     transform: translateX(-50%);
+     display: flex;
+     align-items: center;
+     gap: 10px;
+ }
+
+ .logo-agi {
+     display: block;
+     width: 304px;
+     height: 54px;
+     object-fit: contain;
+ }
+
+ .identidade-sistema > div {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 2px;
+ }
+
+ .marca-operador {
+     font-size: 17px;
+     font-weight: 700;
+ }
+
+ .descricao-sistema {
+     display: block;
+     color: #b8c2c7;
+     font-size: 11px;
+     text-align: center;
+ }
+
+ .modulo-atual {
+     margin-left: auto;
+     padding-left: 18px;
+     border-left: 1px solid #526069;
+     color: #dce3e6;
+     font-size: 14px;
+ }
+
+ .usuario-operador {
+     display: flex;
+     align-items: center;
+     gap: 14px;
+     font-size: 14px;
+ }
+
+ .usuario-operador a {
+     color: #60a5fa;
+     font-weight: 700;
+     text-decoration: none;
+ }
 
         .container {
             max-width: 500px;
-            margin: 50px auto;
+            margin: 44px auto;
             background: white;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border: 1px solid #d9dddd;
+            border-radius: 6px;
+            box-shadow: none;
         }
 
         .botao-index {
@@ -23,7 +92,7 @@
             margin-top: 50px;
             padding: 10px 12px;
             border-radius: 6px;
-            background: #2563eb;
+            background: #08783d;
             color: #fff;
             font-weight: bold;
             font-size: 14px;
@@ -34,7 +103,7 @@
 
         .links-navegacao {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: 16px;
         }
 
@@ -47,7 +116,7 @@
 
         .pagina-index button:hover,
         .botao-index:hover {
-            background: #1d4ed8;
+            background: #056331;
             color: #fff;
         }
 
@@ -75,24 +144,25 @@
             width: 100%;
             padding: 12px;
             border: 1px solid #ccc;
-            border-radius: 6px;
+            border-radius: 5px;
             box-sizing: border-box;
         }
 
         button {
             width: 100%;
             margin-top: 20px;
+            min-height: 48px;
             padding: 12px;
             border: none;
-            border-radius: 6px;
-            background: #2563eb;
+            border-radius: 5px;
+            background: #08783d;
             color: white;
             font-size: 16px;
             cursor: pointer;
         }
 
         button:hover {
-            background: #1d4ed8;
+            background: #056331;
         }
 
         #arquivoSelecionado {
@@ -106,12 +176,39 @@
         }
 
         @media (max-width: 600px) {
+            .cabecalho-operador {
+                display: block;
+                min-height: 0;
+                padding: 12px 16px 14px;
+            }
+
+            .identidade-sistema {
+                position: static;
+                justify-content: center;
+                transform: none;
+            }
+
+            .modulo-atual {
+                margin-top: 10px;
+                padding: 8px 0 0;
+                border-top: 1px solid #526069;
+                border-left: 0;
+                font-size: 13px;
+            }
+
+            .usuario-operador {
+                justify-content: space-between;
+                gap: 8px;
+                font-size: 13px;
+            }
+
             body {
-                padding: 16px;
+                padding: 0;
             }
 
             .container {
-                margin: 24px auto;
+                width: calc(100% - 28px);
+                margin: 24px auto 34px;
                 padding: 22px 18px;
             }
 
@@ -121,6 +218,17 @@
 
             button {
                 min-height: 48px;
+            }
+
+            .links-navegacao {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .links-navegacao .botao-index {
+                width: 100%;
+                margin-top: 20px;
+                margin-bottom: 0;
             }
 
         }

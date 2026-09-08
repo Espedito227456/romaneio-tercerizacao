@@ -212,7 +212,7 @@ function buscarRemessa() {
     const encontrada = remessas.find(function (remessa) {
         const numero = String(remessa.numero || "").toLowerCase();
         const busca = codigo.toLowerCase();
-        return numero === busca || numero.endsWith(busca);
+        return busca && (normalizar(numero) === normalizar(busca) || normalizar(numero).endsWith(normalizar(busca)));
     });
 
     if (!encontrada) {
@@ -436,11 +436,11 @@ function renderPecas() {
                     <div class="peca-info">
 
                         <div class="codigo">
-                            ${peca.codigo}
+                            ${escapar(peca.codigo)}
                         </div>
 
                         <div class="nome">
-                            ${peca.descricao || "Sem descrição"}
+                            ${escapar(peca.descricao || "Sem descrição")}
                         </div>
 
                         <div>
@@ -562,7 +562,7 @@ function renderFotos() {
                 <div class="foto-card">
 
                     <img
-                        src="${foto}"
+                        src="${escaparFoto(foto)}"
                         alt="Foto da peça"
                     >
 
@@ -602,44 +602,45 @@ function abrirCamera() {
 ===================================================== */
 
 function adicionarFoto(event) {
-
-    const arquivo =
-        event.target.files[0];
-
+    if (salvamentoEmAndamento) return;
+    const arquivo = event.target.files[0];
+    event.target.value = "";
 
     if (!arquivo) {
         return;
     }
 
+    if (!/^image\/(?:jpeg|png|gif|webp)$/i.test(arquivo.type)) {
+        return;
+    }
+    if (arquivo.size > 8 * 1024 * 1024) {
+        return;
+    }
 
-    const leitor =
-        new FileReader();
-
-
-    leitor.onload = function (e) {
-
-        if (!Array.isArray(pecaAtual.fotos)) {
-            pecaAtual.fotos = [];
+    const pecaEditada = pecaAtual;
+    lerFoto(arquivo).then(comprimirFoto).then(function (foto) {
+        if (!pecaAtual || pecaAtual !== pecaEditada) return;
+        if (!Array.isArray(pecaEditada.fotos)) {
+            pecaEditada.fotos = [];
         }
 
-        pecaAtual.fotos.push(
-            e.target.result
-        );
-
-        salvarRemessas();
-
-
-        renderFotos();
-
-        renderPecas();
-
-    };
-
-
-    leitor.readAsDataURL(arquivo);
-
-
-    event.target.value = "";
+        pecaEditada.fotos.push(foto);
+        return salvarRemessas().then(function (salvou) {
+            if (!salvou) {
+                if (pecaAtual === pecaEditada) pecaEditada.fotos.pop();
+                return;
+            }
+            renderFotos();
+            renderPecas();
+        });
+    }).catch(function () {
+        if (pecaAtual === pecaEditada) {
+            pecaEditada.fotos.pop();
+            renderFotos();
+            renderPecas();
+        }
+        mensagemErro("Não foi possível salvar a foto. Tente novamente.", true);
+    });
 
 }
 
@@ -649,7 +650,7 @@ function adicionarFoto(event) {
 ===================================================== */
 
 function excluirFoto(indice) {
-
+    if (salvamentoEmAndamento) return;
     const confirmar =
         confirm(
             "Tem certeza que deseja excluir esta foto?"
@@ -661,17 +662,16 @@ function excluirFoto(indice) {
     }
 
 
-    pecaAtual.fotos.splice(
-        indice,
-        1
-    );
-
-    salvarRemessas();
-
-
-    renderFotos();
-
-    renderPecas();
+    const pecaEditada = pecaAtual;
+    const fotoRemovida = pecaEditada.fotos.splice(indice, 1)[0];
+    salvarRemessas().then(function (salvou) {
+        if (!salvou) {
+            if (pecaAtual === pecaEditada) pecaEditada.fotos.splice(indice, 0, fotoRemovida);
+            mensagemErro("Não foi possível excluir a foto. Tente novamente.", true);
+        }
+        renderFotos();
+        renderPecas();
+    });
 
 }
 
@@ -727,7 +727,12 @@ function novaBusca() {
 let remessas = [];
 const canalTempoReal = new EventSource("/api/tempo-real");
 canalTempoReal.addEventListener("remessa:atualizada", function (evento) {
-    const atualizada = JSON.parse(evento.data);
+    let atualizada;
+    try {
+        atualizada = JSON.parse(evento.data);
+    } catch (_) {
+        return;
+    }
     if (!atualizada || !atualizada.id) return;
     const indice = remessas.findIndex(function (item) { return String(item.id || item.numero) === String(atualizada.id); });
     if (indice < 0) return;
@@ -765,31 +770,98 @@ function carregarRemessas() {
         });
 }
 
-async function salvarRemessas() {
+let filaSalvamento = Promise.resolve();
+let salvamentoEmAndamento = false;
+
+function salvarRemessas() {
+    if (salvamentoEmAndamento) return Promise.resolve(false);
+    salvamentoEmAndamento = true;
+    const operacao = filaSalvamento.then(executarSalvamento, executarSalvamento);
+    filaSalvamento = operacao.catch(function () {});
+    return operacao.finally(function () { salvamentoEmAndamento = false; });
+}
+
+async function executarSalvamento() {
+    if (!remessaAtual) return false;
     try {
-        const respostas = await Promise.all(remessas.map(function (remessa) {
-            return fetch("/api/remessas/" + encodeURIComponent(remessa.id || remessa.numero), {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(remessa)
-            }).then(async function (resposta) {
-                if (resposta.status === 409) {
-                    const dados = await resposta.json();
-                    if (dados.remessa) {
-                        const indice = remessas.findIndex(function (item) { return String(item.id || item.numero) === String(dados.remessa.id || dados.remessa.numero); });
-                        if (indice >= 0) remessas[indice] = dados.remessa;
-                        if (remessaAtual && String(remessaAtual.id || remessaAtual.numero) === String(dados.remessa.id || dados.remessa.numero)) {
-                            remessaAtual = dados.remessa;
-                            pecaAtual = null;
-                            atualizarInformacoes(); renderPecas(); renderFotos();
-                        }
-                    }
-                }
-                return resposta;
-            });
-        }));
-        return respostas.every(function (resposta) { return resposta.ok; });
+        const resposta = await fetch("/api/remessas/" + encodeURIComponent(remessaAtual.id || remessaAtual.numero), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(remessaAtual)
+        });
+        if (resposta.status === 409) {
+            const dados = await resposta.json();
+            if (dados.remessa) {
+                const indice = remessas.findIndex(function (item) { return String(item.id || item.numero) === String(dados.remessa.id || dados.remessa.numero); });
+                if (indice >= 0) remessas[indice] = dados.remessa;
+                remessaAtual = dados.remessa;
+                pecaAtual = null;
+                atualizarInformacoes(); renderPecas(); renderFotos();
+            }
+            return false;
+        }
+        if (!resposta.ok) return false;
+        const salva = await resposta.json();
+        const indice = remessas.findIndex(function (item) { return String(item.id || item.numero) === String(salva.id || salva.numero); });
+        if (indice >= 0) remessas[indice] = salva;
+        remessaAtual = salva;
+        if (pecaAtual) {
+            pecaAtual = remessaAtual.pecas.find(function (peca) { return String(peca.codigo) === String(pecaAtual.codigo); }) || null;
+        }
+        return true;
     } catch (_) {
         return false;
     }
+}
+
+function lerFoto(arquivo) {
+    return new Promise(function (resolver, rejeitar) {
+        const leitor = new FileReader();
+        leitor.onload = function () { resolver(leitor.result); };
+        leitor.onerror = rejeitar;
+        leitor.readAsDataURL(arquivo);
+    });
+}
+
+function comprimirFoto(dataUrl) {
+    return new Promise(function (resolver, rejeitar) {
+        const imagem = new Image();
+        imagem.onload = function () {
+            const limite = 1280;
+            const escala = Math.min(1, limite / Math.max(imagem.naturalWidth, imagem.naturalHeight));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(imagem.naturalWidth * escala));
+            canvas.height = Math.max(1, Math.round(imagem.naturalHeight * escala));
+            const contexto = canvas.getContext("2d");
+            if (!contexto) return rejeitar(new Error("Canvas indisponível."));
+            contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+            const foto = canvas.toDataURL("image/jpeg", 0.72);
+            if (!foto.startsWith("data:image/jpeg;base64,")) return rejeitar(new Error("Imagem inválida."));
+            resolver(foto);
+        };
+        imagem.onerror = rejeitar;
+        imagem.src = dataUrl;
+    });
+}
+
+function normalizar(valor) {
+    return String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function escapar(valor) {
+    const elemento = document.createElement("span");
+    elemento.textContent = valor == null ? "" : String(valor);
+    return elemento.innerHTML;
+}
+
+function escaparFoto(valor) {
+    const foto = String(valor || "");
+    return /^data:image\/(?:jpeg|png|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(foto) ? escapar(foto) : "";
+}
+
+function mensagemErro(texto, erro) {
+    const elemento = document.getElementById("mensagemErro");
+    if (!elemento) return;
+    elemento.textContent = texto;
+    elemento.classList.toggle("erro", Boolean(erro));
 }
