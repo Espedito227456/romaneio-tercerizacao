@@ -125,7 +125,8 @@ function responderJson(res, statusCode, dados) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
-    "X-Content-Type-Options": "nosniff"
+    "X-Content-Type-Options": "nosniff",
+    "Access-Control-Allow-Origin": "*"
   });
   res.end(JSON.stringify(dados));
 }
@@ -198,6 +199,14 @@ function servirArquivo(res, urlPath) {
 
 const servidor = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    });
+    return res.end();
+  }
   if (url.pathname === "/api/remessas" && req.method === "GET") {
     return responderJson(res, 200, lerRemessas().map(prepararRemessa).filter(Boolean));
   }
@@ -207,7 +216,8 @@ const servidor = http.createServer(async (req, res) => {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       "Connection": "keep-alive",
-      "X-Accel-Buffering": "no"
+      "X-Accel-Buffering": "no",
+      "Access-Control-Allow-Origin": "*"
     });
     res.write(`event: conectado\ndata: ${JSON.stringify({ ok: true })}\n\n`);
     clientesTempoReal.add(res);

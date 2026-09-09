@@ -17,8 +17,13 @@
       <h2>Localizar remessa</h2>
       <p class="subtitulo">Digite o número da remessa para iniciar a conferência.</p>
       <label for="numeroBusca">Número da remessa</label>
-      <div class="busca-remessa"><input id="numeroBusca" type="text" autocomplete="off" placeholder="Ex.: REMESSA 017873"><button id="buscarRemessa" type="button">Abrir remessa</button></div>
-      <a class="botao-voltar botao-voltar-importacao" href="index.html">Voltar para importar remessa</a>
+      <div class="busca-remessa">
+        <input id="numeroBusca" type="text" autocomplete="off" placeholder="Ex.: REMESSA 017873">
+        <div class="acoes-busca">
+          <button id="buscarRemessa" type="button">Abrir remessa</button>
+          <a class="botao-voltar botao-voltar-importacao" href="index.html">Voltar para importar remessa</a>
+        </div>
+      </div>
       <p id="mensagemBusca" class="mensagem" aria-live="polite"></p>
     </div>
 

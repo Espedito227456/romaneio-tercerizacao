@@ -5,7 +5,8 @@ let fotosPendentes = [];
 let envioEmAndamento = false;
 const chaveRemessaAtiva = "remessaAtiva";
 
-const canalTempoReal = new EventSource("/api/tempo-real");
+const API_BASE = window.location.protocol === "file:" ? "http://localhost:3000" : "";
+const canalTempoReal = new EventSource(API_BASE + "/api/tempo-real");
 canalTempoReal.addEventListener("remessa:atualizada", evento => {
   try { receberAtualizacaoTempoReal(JSON.parse(evento.data)); } catch (_) {}
 });
@@ -40,7 +41,7 @@ document.getElementById("fecharModalRemessa").addEventListener("click", fecharMo
 document.getElementById("selecionarNovaRemessa").addEventListener("click", () => sessionStorage.removeItem(chaveRemessaAtiva));
 
 function carregarRemessas() {
-  return fetch("/api/remessas").then(resposta => resposta.ok ? resposta.json() : Promise.reject()).then(dados => dados.filter(item => item && Array.isArray(item.pecas)).map(item => ({
+  return fetch(API_BASE + "/api/remessas").then(resposta => resposta.ok ? resposta.json() : Promise.reject()).then(dados => dados.filter(item => item && Array.isArray(item.pecas)).map(item => ({
       ...item,
       pecas: item.pecas.filter(peca => peca && String(peca.codigo || "").trim() && Number.isInteger(Number(peca.quantidade)) && Number(peca.quantidade) > 0).map(peca => ({
         ...peca,
@@ -239,7 +240,7 @@ async function salvar() {
   if (indice < 0) return false;
   remessas[indice] = remessa;
   try {
-    const resposta = await fetch("/api/remessas/" + encodeURIComponent(remessa.id || remessa.numero), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(remessa) });
+    const resposta = await fetch(API_BASE + "/api/remessas/" + encodeURIComponent(remessa.id || remessa.numero), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(remessa) });
     if (resposta.status === 409) {
       const dados = await resposta.json();
       if (dados.remessa) {

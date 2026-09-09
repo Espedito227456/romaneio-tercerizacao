@@ -10,8 +10,8 @@
         }
 
         header {
-            background: #0d1820;
-            color: white;
+            background: white;
+            color: #222;
             padding: 12px 24px;
             min-height: 58px;
             display: flex;

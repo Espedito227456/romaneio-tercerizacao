@@ -725,7 +725,8 @@ function novaBusca() {
 }
 
 let remessas = [];
-const canalTempoReal = new EventSource("/api/tempo-real");
+const API_BASE = window.location.protocol === "file:" ? "http://localhost:3000" : "";
+const canalTempoReal = new EventSource(API_BASE + "/api/tempo-real");
 canalTempoReal.addEventListener("remessa:atualizada", function (evento) {
     let atualizada;
     try {
@@ -751,7 +752,7 @@ canalTempoReal.addEventListener("remessa:atualizada", function (evento) {
 carregarRemessas();
 
 function carregarRemessas() {
-    fetch("/api/remessas")
+    fetch(API_BASE + "/api/remessas")
         .then(function (resposta) { return resposta.ok ? resposta.json() : Promise.reject(); })
         .then(function (dados) {
             remessas = Array.isArray(dados)
@@ -784,7 +785,7 @@ function salvarRemessas() {
 async function executarSalvamento() {
     if (!remessaAtual) return false;
     try {
-        const resposta = await fetch("/api/remessas/" + encodeURIComponent(remessaAtual.id || remessaAtual.numero), {
+        const resposta = await fetch(API_BASE + "/api/remessas/" + encodeURIComponent(remessaAtual.id || remessaAtual.numero), {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(remessaAtual)

@@ -13,7 +13,7 @@
         .pagina-remessa .cabecalho-operador {
             min-height: 84px;
             padding: 16px 24px;
-            background: #0d1820;
+            background: white;
             color: #fff;
         }
 
@@ -48,6 +48,13 @@
             text-decoration: underline;
         }
 
+        .pagina-remessa > .container > h1,
+        .pagina-remessa > .container > .subtitulo {
+            width: min(100%, 760px);
+            margin-right: auto;
+            margin-left: auto;
+        }
+
         h1 {
             margin-bottom: 8px;
         }
@@ -58,7 +65,7 @@
         }
 
         .selecao-remessa {
-            max-width: 620px;
+            width: min(100%, 760px);
             margin: 35px auto;
             padding: 25px;
             background: white;
@@ -136,26 +143,38 @@
         }
 
         .busca-remessa {
-            display: flex;
-            gap: 10px;
+            display: block;
         }
 
         .busca-remessa input {
-            flex: 1;
-            min-width: 0;
+            display: block;
+            width: 100%;
             padding: 12px;
             border: 1px solid #bbb;
             border-radius: 6px;
             font-size: 16px;
         }
 
+        .acoes-busca {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 10px;
+        }
+
         .busca-remessa button {
+            flex: 0 0 auto;
             padding: 12px 16px;
             border: 0;
             border-radius: 6px;
             background: #08783d;
             color: #fff;
             cursor: pointer;
+        }
+
+        .acoes-busca .botao-voltar-importacao {
+            margin: 0;
         }
 
         /* Informações da remessa */
@@ -214,16 +233,33 @@
         }
 
         .leitura-manual {
-            display: flex;
-            gap: 10px;
-            align-items: end;
+            display: block;
             margin: 16px 0;
         }
 
-        .leitura-manual label { display: block; font-weight: bold; }
-        .leitura-manual input { flex: 1; padding: 12px; border: 1px solid #bbb; border-radius: 6px; font-size: 16px; }
+        .leitura-manual label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .leitura-manual input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
         .leitura-manual button, .camera-area button { padding: 12px 16px; border: 0; border-radius: 6px; background: #08783d; color: #fff; cursor: pointer; }
-        .campo-com-acao { display: flex; gap: 10px; }
+
+        .campo-com-acao {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+        }
+
         .campo-com-acao button { white-space: nowrap; }
         .resultado-codigo { min-height: 20px; text-align: left; }
         .quantidade-conferencia { display: flex; align-items: end; gap: 12px; margin: 18px 0; }
@@ -359,12 +395,12 @@
         .acoes-remessa {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             gap: 16px;
             margin-top: 25px;
         }
 
         .botao-selecionar-remessa {
+            flex: 1 1 0;
             display: inline-block;
             margin: 0;
             padding: 14px 25px;
@@ -382,11 +418,13 @@
         }
 
         .finalizar {
+            flex: 1 1 0;
             margin-top: 0;
             text-align: right;
         }
 
         .botao-finalizar {
+            width: 100%;
             padding: 14px 25px;
             border: none;
             border-radius: 6px;
@@ -413,6 +451,11 @@
             .pagina-remessa .container {
                 width: min(100% - 32px, 980px);
                 margin: 28px auto 48px;
+            }
+
+            .pagina-remessa > .container > h1,
+            .pagina-remessa > .container > .subtitulo {
+                width: 100%;
             }
 
             .pagina-remessa h1 {
@@ -535,10 +578,23 @@
                 display: block;
             }
 
-            .busca-remessa input,
-            .busca-remessa button {
+            .busca-remessa input {
                 width: 100%;
                 margin-top: 8px;
+            }
+
+            .acoes-busca {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .acoes-busca button,
+            .acoes-busca .botao-voltar-importacao {
+                width: 100%;
+                margin: 0;
+                text-align: center;
             }
 
             th,
