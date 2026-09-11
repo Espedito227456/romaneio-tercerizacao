@@ -38,6 +38,11 @@
             🔍 BUSCAR
         </button>
 
+        <div id="containerRemessasRecentes" class="remessas-recentes" hidden>
+            <span class="titulo-recentes">Últimas remessas acessadas:</span>
+            <div id="listaRemessasRecentes" class="lista-recentes"></div>
+        </div>
+
         <div id="mensagemErro" class="erro"></div>
 
     </div>
@@ -60,8 +65,13 @@
             </p>
 
             <p>
-                Data:
-                <strong id="dataRemessa"></strong>
+                Data de Criação:
+                <strong id="dataCriacaoRemessa">Não informada</strong>
+            </p>
+
+            <p>
+                Data de Finalização:
+                <strong id="dataFinalizacaoRemessa">Não informada</strong>
             </p>
 
             <div id="statusRemessa"></div>

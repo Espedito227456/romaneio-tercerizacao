@@ -24,6 +24,10 @@
           <a class="botao-voltar botao-voltar-importacao" href="conferencia-remessa.html">Consultar remessa em conferência</a>
         </div>
       </div>
+      <div id="containerRemessasRecentes" class="remessas-recentes" hidden>
+        <span class="titulo-recentes">Últimas remessas acessadas:</span>
+        <div id="listaRemessasRecentes" class="lista-recentes"></div>
+      </div>
       <p id="mensagemBusca" class="mensagem" aria-live="polite"></p>
     </div>
 
@@ -38,7 +42,7 @@
 
     <div id="conteudoRemessa" hidden>
     <div class="informacoes">
-      <div class="card"><span>Remessa</span><strong id="numeroRemessa">—</strong></div><div class="card"><span>Semana</span><strong id="semanaRemessa">—</strong></div><div class="card"><span>Serviço</span><strong id="tipoServico">—</strong></div><div class="card"><span>Produto</span><strong id="produtoRemessa">—</strong></div><div class="card"><span>Total de peças</span><strong id="totalPecas">0</strong></div><div class="card"><span>Kg conferidos</span><strong id="pesoTotal">0 kg</strong></div><div class="card"><span>Encontradas</span><strong id="totalEncontradas">0</strong></div><div class="card"><span>Faltantes</span><strong id="totalFaltantes">0</strong></div><div class="card"><span>Progresso</span><strong id="progresso">0%</strong></div>
+      <div class="card"><span>Remessa</span><strong id="numeroRemessa">—</strong></div><div class="card"><span>Semana</span><strong id="semanaRemessa">—</strong></div><div class="card"><span>Total de peças</span><strong id="totalPecas">0</strong></div><div class="card"><span>Kg conferidos</span><strong id="pesoTotal">0 kg</strong></div><div class="card"><span>Encontradas</span><strong id="totalEncontradas">0</strong></div><div class="card"><span>Faltantes</span><strong id="totalFaltantes">0</strong></div><div class="card"><span>Progresso</span><strong id="progresso">0%</strong></div>
     </div>
     <p id="avisoSemRemessa" class="aviso-sem-remessa" hidden>Não há uma remessa carregada neste aparelho. <a href="index.html">Importar remessa</a></p>
     <div class="conferencia">

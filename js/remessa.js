@@ -48,15 +48,81 @@ function carregarRemessas() {
         codigo: String(peca.codigo).trim(),
         quantidade: Number(peca.quantidade),
         encontrada: Math.max(0, Math.min(Number(peca.quantidade), Number(peca.encontrada) || 0)),
-        fotos: Array.isArray(peca.fotos) ? peca.fotos.filter(foto => typeof foto === "string" && foto.startsWith("data:image/")) : []
+        fotos: Array.isArray(peca.fotos) ? peca.fotos.filter(foto => {
+          const imagem = typeof foto === "string" ? foto : foto?.imagem;
+          return typeof imagem === "string" && (imagem.startsWith("data:image/") || imagem.startsWith("/uploads/"));
+        }) : []
       }))
     })).filter(item => item.pecas.length));
 }
 
 carregarRemessas().then(dados => {
   remessas = dados;
+  renderizarRemessasRecentes();
   restaurarRemessaAtiva();
-}).catch(() => mensagemBusca("Não foi possível conectar ao servidor.", true));
+}).catch(() => {
+  renderizarRemessasRecentes();
+  mensagemBusca("Não foi possível conectar ao servidor.", true);
+});
+
+function obterChaveRecentes() {
+  const sessao = typeof getAuthSession === "function" ? getAuthSession() : null;
+  const usuario = sessao && sessao.username ? sessao.username.trim() : "geral";
+  return "remessasRecentes_" + usuario;
+}
+
+function obterRemessasRecentes() {
+  try {
+    const chave = obterChaveRecentes();
+    const dados = JSON.parse(localStorage.getItem(chave) || "[]");
+    return Array.isArray(dados) ? dados : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function salvarRemessaRecente(numero) {
+  if (!numero) return;
+  try {
+    const chave = obterChaveRecentes();
+    let recentes = obterRemessasRecentes();
+    recentes = recentes.filter(item => normalizar(item) !== normalizar(numero));
+    recentes.unshift(String(numero).trim());
+    recentes = recentes.slice(0, 5);
+    localStorage.setItem(chave, JSON.stringify(recentes));
+  } catch (_) {}
+  renderizarRemessasRecentes();
+}
+
+function renderizarRemessasRecentes() {
+  const container = document.getElementById("containerRemessasRecentes");
+  const lista = document.getElementById("listaRemessasRecentes");
+  if (!container || !lista) return;
+
+  const recentes = obterRemessasRecentes();
+  if (!recentes.length) {
+    container.hidden = true;
+    lista.innerHTML = "";
+    return;
+  }
+
+  container.hidden = false;
+  lista.innerHTML = recentes.map(num => `
+    <button type="button" class="btn-remessa-recente" data-numero="${escapar(num)}" title="Abrir remessa ${escapar(num)}">
+      📦 ${escapar(num)}
+    </button>
+  `).join("");
+
+  lista.querySelectorAll(".btn-remessa-recente").forEach(botao => {
+    botao.addEventListener("click", () => {
+      const num = botao.getAttribute("data-numero");
+      if (numeroBusca) {
+        numeroBusca.value = num;
+        buscarRemessa();
+      }
+    });
+  });
+}
 
 function buscarRemessa() {
   const busca = normalizar(numeroBusca.value);
@@ -72,12 +138,11 @@ function buscarRemessa() {
 function abrirRemessa(encontrada) {
   remessa = encontrada;
   sessionStorage.setItem(chaveRemessaAtiva, remessa.id || remessa.numero);
+  salvarRemessaRecente(remessa.numero);
   document.getElementById("selecaoRemessa").hidden = true;
   document.getElementById("conteudoRemessa").hidden = false;
   document.getElementById("numeroRemessa").textContent = remessa.numero;
   document.getElementById("semanaRemessa").textContent = remessa.semana || "—";
-  document.getElementById("tipoServico").textContent = remessa.servico || "—";
-  document.getElementById("produtoRemessa").textContent = remessa.produto || "—";
   codigoManual.disabled = false;
   buscarCodigo.disabled = false;
   atualizarTela();
@@ -98,6 +163,7 @@ function remessaConcluida(item) {
 }
 
 function abrirModalRemessaConcluida(item) {
+  salvarRemessaRecente(item.numero);
   const nomeRemessa = /^remessa\b/i.test(String(item.numero)) ? item.numero : "remessa " + item.numero;
   document.getElementById("mensagemRemessaConcluida").textContent = "A " + nomeRemessa + " já foi totalmente conferida. Consulte as fotos e os detalhes na tela de conferência.";
   document.getElementById("consultarRemessaConcluida").href = "conferencia-remessa.html?remessa=" + encodeURIComponent(item.numero);
@@ -158,7 +224,7 @@ function adicionarFoto(evento) {
 function atualizarFotos() {
   const fotosRegistradas = (pecaAtiva?.fotos || []).length;
   document.getElementById("contadorFotos").textContent = fotosPendentes.length + "/5 nesta conferência; " + fotosRegistradas + " acumulada(s)";
-  document.getElementById("fotosConferencia").innerHTML = fotosPendentes.map(foto => `<img class="miniatura-evidencia" src="${escapar(foto)}" alt="Foto da peça ${escapar(pecaAtiva.codigo)}">`).join("");
+  document.getElementById("fotosConferencia").innerHTML = fotosPendentes.map(foto => `<img class="miniatura-evidencia" src="${escaparFoto(foto)}" alt="Foto da peça ${escapar(pecaAtiva.codigo)}">`).join("");
   fotoConferencia.disabled = fotosPendentes.length >= 5;
 }
 
@@ -206,15 +272,23 @@ async function enviarConferencia() {
 
   const encontradaAnterior = pecaDoEnvio.encontrada;
   const fotosAnteriores = [...(pecaDoEnvio.fotos || [])];
+  const dataCriacaoAnterior = remessaDoEnvio.dataCriacao;
   pecaDoEnvio.encontrada += quantidade;
-  pecaDoEnvio.fotos = [...fotosAnteriores, ...fotosComprimidas];
-  if (!await salvar()) {
+  if (!remessaDoEnvio.dataCriacao) {
+    remessaDoEnvio.dataCriacao = obterDataHoraAtualFormatada();
+  }
+  const sessao = getAuthSession();
+  const usuario = sessao && sessao.username ? String(sessao.username).trim() : "";
+  pecaDoEnvio.fotos = [...fotosAnteriores, ...fotosComprimidas.map(imagem => ({ imagem, usuario }))];
+  const resultadoSalvar = await salvar();
+  if (!resultadoSalvar.sucesso) {
     if (remessa === remessaDoEnvio && pecaAtiva === pecaDoEnvio) {
       pecaDoEnvio.encontrada = encontradaAnterior;
       pecaDoEnvio.fotos = fotosAnteriores;
+      remessaDoEnvio.dataCriacao = dataCriacaoAnterior;
     }
     envioEmAndamento = false;
-    mensagem("Não foi possível salvar a conferência. Verifique a conexão e tente novamente.", true);
+    mensagem(resultadoSalvar.mensagem, true);
     atualizarEstadoEnvio();
     return;
   }
@@ -237,7 +311,7 @@ function limparPecaAtiva() {
 
 async function salvar() {
   const indice = remessas.findIndex(item => normalizar(item.numero) === normalizar(remessa.numero));
-  if (indice < 0) return false;
+  if (indice < 0) return { sucesso: false, mensagem: "A remessa não está carregada nesta tela. Faça uma nova busca e tente novamente." };
   remessas[indice] = remessa;
   try {
     const resposta = await fetch(API_BASE + "/api/remessas/" + encodeURIComponent(remessa.id || remessa.numero), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(remessa) });
@@ -250,13 +324,29 @@ async function salvar() {
         atualizarTela();
         mensagem("⚠️ Outro usuário acabou de conferir esta remessa. Os dados foram atualizados.", true);
       }
-      return false;
+      return { sucesso: false, mensagem: "A remessa foi alterada por outro usuário. Os dados mais recentes foram carregados; localize o código novamente." };
     }
-    if (!resposta.ok) return false;
+    if (!resposta.ok) {
+      let dados = {};
+      try { dados = await resposta.json(); } catch (_) {}
+      const mensagens = {
+        404: "A remessa não foi encontrada no servidor. Faça uma nova busca.",
+        413: "A foto ficou muito grande para envio. Tire uma nova foto e tente novamente.",
+        500: "O servidor encontrou um erro ao armazenar a foto. Verifique a pasta uploads e tente novamente."
+      };
+      return {
+        sucesso: false,
+        mensagem: mensagens[resposta.status]
+          || (resposta.status === 400 && dados.erro ? "O servidor rejeitou a conferência: " + dados.erro : "")
+          || "O servidor não conseguiu salvar a conferência. Tente novamente."
+      };
+    }
     remessa = await resposta.json();
     remessas[indice] = remessa;
-    return true;
-  } catch (_) { return false; }
+    return { sucesso: true };
+  } catch (_) {
+    return { sucesso: false, mensagem: "Não foi possível acessar o servidor da aplicação. Verifique se o servidor está ativo e tente novamente." };
+  }
 }
 
 function receberAtualizacaoTempoReal(atualizada) {
@@ -306,28 +396,50 @@ function atualizarTela() {
   }).join("") || "<tr><td colspan=\"8\">Todas as peças da remessa foram encontradas.</td></tr>";
 }
 
-function finalizarRemessa() {
+async function finalizarRemessa() {
   if (!remessa || envioEmAndamento) return;
   const total = remessa.pecas.reduce((soma, peca) => soma + peca.quantidade, 0);
   const encontradas = remessa.pecas.reduce((soma, peca) => soma + peca.encontrada, 0);
   if (encontradas !== total) return;
+  
+  envioEmAndamento = true;
+  const dataFinalizacaoAnterior = remessa.dataFinalizacao;
+  remessa.dataFinalizacao = obterDataHoraAtualFormatada();
+  const resultadoSalvar = await salvar();
+  if (!resultadoSalvar.sucesso) {
+    remessa.dataFinalizacao = dataFinalizacaoAnterior;
+    envioEmAndamento = false;
+    mensagem("Não foi possível registrar a finalização da remessa. Tente novamente.", true);
+    return;
+  }
+  envioEmAndamento = false;
+
   remessa = null;
   pecaAtiva = null;
   fotosPendentes = [];
   sessionStorage.removeItem(chaveRemessaAtiva);
   document.getElementById("conteudoRemessa").hidden = true;
   document.getElementById("selecaoRemessa").hidden = false;
+  renderizarRemessasRecentes();
   numeroBusca.value = "";
-  mensagemBusca("Remessa finalizada. Digite o código da próxima remessa.");
+  mensagemBusca("Remessa finalizada com sucesso. Digite o código da próxima remessa.");
   numeroBusca.focus();
 }
 
 function lerFoto(arquivo) { return new Promise((resolver, rejeitar) => { const leitor = new FileReader(); leitor.onload = () => resolver(leitor.result); leitor.onerror = rejeitar; leitor.readAsDataURL(arquivo); }); }
+function escaparFoto(foto) {
+  const imagem = typeof foto === "string" ? foto : foto?.imagem;
+  if (typeof imagem !== "string") return "";
+  const fonte = imagem.startsWith("/uploads/") ? API_BASE + imagem : imagem;
+  return (/^data:image\/(?:jpeg|png|gif|webp);base64,/i.test(fonte)
+    || /^\/uploads\/[a-z0-9_.-]+\.(?:jpg|jpeg|png|webp)$/i.test(fonte)
+    || /^https?:\/\/[^/]+\/uploads\/[a-z0-9_.-]+\.(?:jpg|jpeg|png|webp)$/i.test(fonte)) ? escapar(fonte) : "";
+}
 function comprimirFoto(dataUrl) {
   return new Promise((resolver, rejeitar) => {
     const imagem = new Image();
     imagem.onload = () => {
-      const limite = 1280;
+      const limite = 1000;
       const escala = Math.min(1, limite / Math.max(imagem.naturalWidth, imagem.naturalHeight));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(imagem.naturalWidth * escala));
@@ -335,7 +447,7 @@ function comprimirFoto(dataUrl) {
       const contexto = canvas.getContext("2d");
       if (!contexto) return rejeitar(new Error("Canvas indisponível."));
       contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
-      const fotoComprimida = canvas.toDataURL("image/jpeg", 0.72);
+      const fotoComprimida = canvas.toDataURL("image/jpeg", 0.75);
       if (!fotoComprimida.startsWith("data:image/")) return rejeitar(new Error("Formato de imagem inválido."));
       resolver(fotoComprimida);
     };
@@ -343,6 +455,16 @@ function comprimirFoto(dataUrl) {
     imagem.src = dataUrl;
   });
 }
+function obterDataHoraAtualFormatada() {
+  const agora = new Date();
+  const dia = String(agora.getDate()).padStart(2, "0");
+  const mes = String(agora.getMonth() + 1).padStart(2, "0");
+  const ano = agora.getFullYear();
+  const horas = String(agora.getHours()).padStart(2, "0");
+  const minutos = String(agora.getMinutes()).padStart(2, "0");
+  return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+}
+
 function normalizar(valor) { return String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
 function mensagem(texto, erro = false) { const elemento = document.getElementById("mensagemLeitura"); elemento.textContent = texto; elemento.classList.toggle("erro", erro); }
 function mensagemBusca(texto, erro = false) { const elemento = document.getElementById("mensagemBusca"); elemento.textContent = texto; elemento.classList.toggle("erro", erro); }

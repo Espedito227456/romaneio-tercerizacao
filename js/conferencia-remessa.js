@@ -231,6 +231,7 @@ function buscarRemessa() {
     erro.textContent = "";
 
     remessaAtual = encontrada;
+    salvarRemessaRecente(remessaAtual.numero);
 
 
     document
@@ -250,9 +251,15 @@ function buscarRemessa() {
 
 
     document
-        .getElementById("dataRemessa")
+        .getElementById("dataCriacaoRemessa")
         .textContent =
-            remessaAtual.data || "Não informada";
+            remessaAtual.dataCriacao || remessaAtual.data || "Não informada";
+
+
+    document
+        .getElementById("dataFinalizacaoRemessa")
+        .textContent =
+            remessaAtual.dataFinalizacao || "Não finalizada";
 
 
     document
@@ -566,6 +573,10 @@ function renderFotos() {
                         alt="Foto da peça"
                     >
 
+                    <div class="foto-usuario">
+                        Registrada por: ${escapar(obterUsuarioFoto(foto))}
+                    </div>
+
                     <button
                         class="btn-red"
                         onclick="excluirFoto(${indice})">
@@ -624,7 +635,9 @@ function adicionarFoto(event) {
             pecaEditada.fotos = [];
         }
 
-        pecaEditada.fotos.push(foto);
+        const sessao = getAuthSession();
+        const usuario = sessao && sessao.username ? String(sessao.username).trim() : "";
+        pecaEditada.fotos.push({ imagem: foto, usuario: usuario });
         return salvarRemessas().then(function (salvou) {
             if (!salvou) {
                 if (pecaAtual === pecaEditada) pecaEditada.fotos.pop();
@@ -722,6 +735,65 @@ function novaBusca() {
         .getElementById("mensagemErro")
         .textContent = "";
 
+    renderizarRemessasRecentes();
+}
+
+function obterChaveRecentes() {
+    const sessao = typeof getAuthSession === "function" ? getAuthSession() : null;
+    const usuario = sessao && sessao.username ? sessao.username.trim() : "geral";
+    return "remessasRecentes_" + usuario;
+}
+
+function obterRemessasRecentes() {
+    try {
+        const chave = obterChaveRecentes();
+        const dados = JSON.parse(localStorage.getItem(chave) || "[]");
+        return Array.isArray(dados) ? dados : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function salvarRemessaRecente(numero) {
+    if (!numero) return;
+    try {
+        const chave = obterChaveRecentes();
+        let recentes = obterRemessasRecentes();
+        recentes = recentes.filter(function (item) { return normalizar(item) !== normalizar(numero); });
+        recentes.unshift(String(numero).trim());
+        recentes = recentes.slice(0, 5);
+        localStorage.setItem(chave, JSON.stringify(recentes));
+    } catch (_) {}
+    renderizarRemessasRecentes();
+}
+
+function renderizarRemessasRecentes() {
+    const container = document.getElementById("containerRemessasRecentes");
+    const lista = document.getElementById("listaRemessasRecentes");
+    if (!container || !lista) return;
+
+    const recentes = obterRemessasRecentes();
+    if (!recentes.length) {
+        container.hidden = true;
+        lista.innerHTML = "";
+        return;
+    }
+
+    container.hidden = false;
+    lista.innerHTML = recentes.map(function (num) {
+        return `<button type="button" class="btn-remessa-recente" data-numero="${escapar(num)}" title="Abrir remessa ${escapar(num)}">📦 ${escapar(num)}</button>`;
+    }).join("");
+
+    lista.querySelectorAll(".btn-remessa-recente").forEach(function (botao) {
+        botao.addEventListener("click", function () {
+            const num = botao.getAttribute("data-numero");
+            const campo = document.getElementById("campoRemessa");
+            if (campo) {
+                campo.value = num;
+                buscarRemessa();
+            }
+        });
+    });
 }
 
 let remessas = [];
@@ -746,6 +818,8 @@ canalTempoReal.addEventListener("remessa:atualizada", function (evento) {
         pecaAtual = novaPeca || null;
     }
     atualizarInformacoes();
+    document.getElementById("dataCriacaoRemessa").textContent = remessaAtual.dataCriacao || remessaAtual.data || "Não informada";
+    document.getElementById("dataFinalizacaoRemessa").textContent = remessaAtual.dataFinalizacao || "Não finalizada";
     renderPecas();
     if (pecaAtual) renderFotos();
 });
@@ -760,6 +834,7 @@ function carregarRemessas() {
                 return remessa && remessa.numero && Array.isArray(remessa.pecas);
             })
                 : [];
+            renderizarRemessasRecentes();
             const numeroInicial = new URLSearchParams(window.location.search).get("remessa");
             if (numeroInicial) {
                 document.getElementById("campoRemessa").value = numeroInicial;
@@ -768,6 +843,7 @@ function carregarRemessas() {
         })
         .catch(function () {
             remessas = [];
+            renderizarRemessasRecentes();
         });
 }
 
@@ -828,7 +904,7 @@ function comprimirFoto(dataUrl) {
     return new Promise(function (resolver, rejeitar) {
         const imagem = new Image();
         imagem.onload = function () {
-            const limite = 1280;
+            const limite = 1000;
             const escala = Math.min(1, limite / Math.max(imagem.naturalWidth, imagem.naturalHeight));
             const canvas = document.createElement("canvas");
             canvas.width = Math.max(1, Math.round(imagem.naturalWidth * escala));
@@ -836,7 +912,7 @@ function comprimirFoto(dataUrl) {
             const contexto = canvas.getContext("2d");
             if (!contexto) return rejeitar(new Error("Canvas indisponível."));
             contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
-            const foto = canvas.toDataURL("image/jpeg", 0.72);
+            const foto = canvas.toDataURL("image/jpeg", 0.75);
             if (!foto.startsWith("data:image/jpeg;base64,")) return rejeitar(new Error("Imagem inválida."));
             resolver(foto);
         };
@@ -856,8 +932,17 @@ function escapar(valor) {
 }
 
 function escaparFoto(valor) {
-    const foto = String(valor || "");
-    return /^data:image\/(?:jpeg|png|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(foto) ? escapar(foto) : "";
+    const foto = typeof valor === "string" ? valor : valor && valor.imagem;
+    const imagem = String(foto || "");
+    const fonte = imagem.startsWith("/uploads/") ? API_BASE + imagem : imagem;
+    return (/^data:image\/(?:jpeg|png|gif|webp);base64,/i.test(fonte)
+        || /^\/uploads\/[a-z0-9_.-]+\.(?:jpg|jpeg|png|webp)$/i.test(fonte)
+        || /^https?:\/\/[^/]+\/uploads\/[a-z0-9_.-]+\.(?:jpg|jpeg|png|webp)$/i.test(fonte)) ? escapar(fonte) : "";
+}
+
+function obterUsuarioFoto(foto) {
+    if (typeof foto === "object" && foto !== null && foto.usuario) return String(foto.usuario);
+    return "Não identificado";
 }
 
 function mensagemErro(texto, erro) {

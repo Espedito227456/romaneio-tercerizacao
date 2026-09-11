@@ -10,6 +10,7 @@ const clientesTempoReal = new Set();
 const port = Number(process.env.PORT) || 3000;
 const root = __dirname;
 const dataDirectory = path.join(root, "data");
+const uploadsDirectory = path.join(root, "uploads");
 const dataFile = path.join(dataDirectory, "remessas.json");
 const usuariosFile = path.join(dataDirectory, "usuarios.json");
 const dbFile = path.join(dataDirectory, "administradores.db");
@@ -119,6 +120,47 @@ function fotoValida(foto) {
     && /^data:image\/(?:jpeg|png|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(foto);
 }
 
+function referenciaFotoValida(foto) {
+  return typeof foto === "string" && /^\/uploads\/[a-z0-9_-]+\.jpg$/i.test(foto);
+}
+
+function nomeBaseFoto(codigo) {
+  const base = String(codigo || "").trim().replace(/[^a-z0-9_-]/gi, "-").replace(/-+/g, "-");
+  return base || "foto";
+}
+
+function criarNomeFoto(codigo) {
+  const base = nomeBaseFoto(codigo);
+  let contador = 1;
+  let nome;
+  do {
+    nome = `${base}${contador === 1 ? "" : `-${contador}`}.jpg`;
+    contador += 1;
+  } while (fs.existsSync(path.join(uploadsDirectory, nome)));
+  return nome;
+}
+
+function prepararFoto(foto) {
+  const imagem = typeof foto === "string" ? foto : foto && foto.imagem;
+  if (!fotoValida(imagem) && !referenciaFotoValida(imagem)) return null;
+  const usuario = typeof foto === "object" && foto !== null ? texto(foto.usuario, 100) : "";
+  return { imagem, ...(usuario ? { usuario } : {}) };
+}
+
+function armazenarFotos(remessa) {
+  fs.mkdirSync(uploadsDirectory, { recursive: true });
+  for (const peca of remessa.pecas) {
+    peca.fotos = peca.fotos.map(foto => {
+      if (referenciaFotoValida(foto.imagem)) return foto;
+      const correspondencia = String(foto.imagem).match(/^data:image\/jpeg;base64,([a-z0-9+/=\s]+)$/i);
+      if (!correspondencia) throw new Error("A evidencia deve estar no formato JPEG.");
+      const nome = criarNomeFoto(peca.codigo);
+      fs.writeFileSync(path.join(uploadsDirectory, nome), Buffer.from(correspondencia[1], "base64"));
+      return { ...foto, imagem: `/uploads/${nome}` };
+    });
+  }
+}
+
 function validarRemessa(valor, exigirVersao = false) {
   if (!valor || typeof valor !== "object" || Array.isArray(valor)) return { erro: "Remessa invalida." };
   const numero = texto(valor.numero, 200);
@@ -140,8 +182,12 @@ function validarRemessa(valor, exigirVersao = false) {
       || !Number.isInteger(encontrada) || encontrada < 0 || encontrada > quantidade
       || !Number.isFinite(pesoKg) || pesoKg < 0) return { erro: "Peca invalida." };
     const fotos = peca.fotos === undefined ? [] : peca.fotos;
-    if (!Array.isArray(fotos) || fotos.length > 100 || fotos.some(foto => !fotoValida(foto))) {
-      return { erro: "Evidencia invalida." };
+    if (!Array.isArray(fotos) || fotos.length > 100) {
+      return { erro: "Evidencia invalida: lista de fotos ausente ou acima do limite." };
+    }
+    const fotosPreparadas = fotos.map(prepararFoto);
+    if (fotosPreparadas.some(foto => !foto)) {
+      return { erro: `Evidencia invalida na peca ${codigo}: a foto nao e um JPEG valido ou uma referencia /uploads/*.jpg.` };
     }
     codigos.add(chaveCodigo);
     pecas.push({
@@ -150,7 +196,7 @@ function validarRemessa(valor, exigirVersao = false) {
       quantidade,
       encontrada,
       pesoKg,
-      fotos: [...fotos]
+      fotos: fotosPreparadas
     });
   }
   const pesoTotalKg = valor.pesoTotalKg === undefined ? pecas.reduce((soma, peca) => soma + peca.pesoKg, 0) : Number(valor.pesoTotalKg);
@@ -164,12 +210,18 @@ function validarRemessa(valor, exigirVersao = false) {
     });
   }
   const id = texto(valor.id, 100);
+  const dataCriacao = texto(valor.dataCriacao, 100);
+  const dataFinalizacao = texto(valor.dataFinalizacao, 100);
+  const data = texto(valor.data, 100);
   return {
     remessa: {
       numero,
       servico: texto(valor.servico, 500) || "—",
       produto: texto(valor.produto, 500) || "—",
       semana: texto(valor.semana, 20) || "—",
+      ...(dataCriacao ? { dataCriacao } : {}),
+      ...(dataFinalizacao ? { dataFinalizacao } : {}),
+      ...(data ? { data } : {}),
       informacoes,
       pesoTotalKg,
       pecas,
@@ -256,7 +308,7 @@ function servirArquivo(res, urlPath) {
   const relativoSeguro = path.relative(root, arquivo);
   const partesSeguras = relativoSeguro.split(path.sep);
   const permitido = (partesSeguras.length === 1 && extensao === ".html")
-    || ["assets", "css", "js"].includes(partesSeguras[0]);
+    || ["assets", "css", "js", "uploads"].includes(partesSeguras[0]);
   if (!permitido || !relativoSeguro || relativoSeguro.startsWith(".." + path.sep) || path.isAbsolute(relativoSeguro)
     || !tiposPublicos.has(extensao) || !fs.existsSync(arquivo) || fs.statSync(arquivo).isDirectory()) {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
@@ -376,6 +428,7 @@ const servidor = http.createServer(async (req, res) => {
         return responderJson(res, 409, { erro: "Ja existe uma remessa com este numero." });
       }
       do { remessa.id = gerarId(); } while (remessas.some(item => item && String(item.id || "") === remessa.id));
+      armazenarFotos(remessa);
       remessas.push(remessa);
       salvarRemessas(remessas);
       emitirTempoReal("remessa:criada", remessa);
@@ -402,6 +455,7 @@ const servidor = http.createServer(async (req, res) => {
       }
       remessa.id = atual.id;
       remessa.versao = atual.versao + 1;
+      armazenarFotos(remessa);
       remessas[indice] = remessa;
       salvarRemessas(remessas);
       emitirTempoReal("remessa:atualizada", remessa);

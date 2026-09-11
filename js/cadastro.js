@@ -86,6 +86,7 @@ const initializeCadastro = () => {
 
     try {
       const novoUsuario = await cadastrarUsuario(username.trim(), password);
+      sessionStorage.removeItem('remessaAtiva');
       setAuthSession(novoUsuario);
       showMessage('Usuário criado com sucesso! Redirecionando...', true);
       setTimeout(() => {

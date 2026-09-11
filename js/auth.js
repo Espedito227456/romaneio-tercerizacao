@@ -19,6 +19,7 @@ function setAuthSession(user) {
 
 function clearAuthSession() {
   localStorage.removeItem(AUTH_STORAGE_KEY);
+  sessionStorage.removeItem('remessaAtiva');
 }
 
 function getPageName() {

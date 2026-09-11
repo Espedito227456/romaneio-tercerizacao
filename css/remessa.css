@@ -202,6 +202,49 @@
             margin: 0;
         }
 
+        .remessas-recentes {
+            margin-top: 18px;
+            padding-top: 15px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .titulo-recentes {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #64748b;
+        }
+
+        .lista-recentes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn-remessa-recente {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-remessa-recente:hover {
+            background: #08783d;
+            border-color: #08783d;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(8, 120, 61, 0.25);
+        }
+
         /* Informações da remessa */
 
         .informacoes {

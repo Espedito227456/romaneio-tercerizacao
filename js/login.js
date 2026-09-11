@@ -62,6 +62,7 @@ const initializeLogin = () => {
 
     try {
       const userSession = await resolveUserLogin(username, password);
+      sessionStorage.removeItem('remessaAtiva');
       setAuthSession(userSession);
       window.location.href = userSession.destination;
     } catch (erro) {
