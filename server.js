@@ -1,7 +1,9 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 const { URL } = require("node:url");
+const { DatabaseSync } = require("node:sqlite");
 
 const clientesTempoReal = new Set();
 
@@ -9,6 +11,8 @@ const port = Number(process.env.PORT) || 3000;
 const root = __dirname;
 const dataDirectory = path.join(root, "data");
 const dataFile = path.join(dataDirectory, "remessas.json");
+const usuariosFile = path.join(dataDirectory, "usuarios.json");
+const dbFile = path.join(dataDirectory, "administradores.db");
 const limiteCorpo = 10 * 1024 * 1024;
 const tiposPublicos = new Set([".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico"]);
 
@@ -29,6 +33,76 @@ function salvarRemessas(remessas) {
     try { fs.rmSync(temporario, { force: true }); } catch (_) {}
     throw erro;
   }
+}
+
+function lerUsuarios() {
+  try {
+    const dados = JSON.parse(fs.readFileSync(usuariosFile, "utf8"));
+    return Array.isArray(dados) ? dados : [];
+  } catch (_) { return []; }
+}
+
+function salvarUsuarios(usuarios) {
+  fs.mkdirSync(dataDirectory, { recursive: true });
+  const temporario = `${usuariosFile}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(temporario, JSON.stringify(usuarios, null, 2), "utf8");
+    fs.renameSync(temporario, usuariosFile);
+  } catch (erro) {
+    try { fs.rmSync(temporario, { force: true }); } catch (_) {}
+    throw erro;
+  }
+}
+
+// Banco de dados (SQLite) apenas para as credenciais do administrador.
+fs.mkdirSync(dataDirectory, { recursive: true });
+const db = new DatabaseSync(dbFile);
+db.exec(
+  "CREATE TABLE IF NOT EXISTS administradores (" +
+  "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+  "usuario TEXT NOT NULL, " +
+  "usuario_normalizado TEXT NOT NULL UNIQUE, " +
+  "senha_hash TEXT NOT NULL, " +
+  "senha_salt TEXT NOT NULL, " +
+  "criado_em TEXT NOT NULL" +
+  ")"
+);
+
+function normalizarUsuario(valor) {
+  return String(valor || "").trim().toLowerCase();
+}
+
+function gerarHashSenha(senha) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(senha, salt, 64).toString("hex");
+  return { hash, salt };
+}
+
+function senhaConfere(senha, hash, salt) {
+  const calculado = crypto.scryptSync(senha, salt, 64);
+  const armazenado = Buffer.from(hash, "hex");
+  return calculado.length === armazenado.length && crypto.timingSafeEqual(calculado, armazenado);
+}
+
+function buscarAdministrador(usuario) {
+  return db.prepare("SELECT * FROM administradores WHERE usuario_normalizado = ?").get(normalizarUsuario(usuario));
+}
+
+const ADMIN_PADRAO = { usuario: "Charles Souza", senha: "Agi2026" };
+
+function garantirAdministradorPadrao() {
+  if (buscarAdministrador(ADMIN_PADRAO.usuario)) return;
+  const { hash, salt } = gerarHashSenha(ADMIN_PADRAO.senha);
+  db.prepare("INSERT INTO administradores (usuario, usuario_normalizado, senha_hash, senha_salt, criado_em) VALUES (?, ?, ?, ?, ?)")
+    .run(ADMIN_PADRAO.usuario, normalizarUsuario(ADMIN_PADRAO.usuario), hash, salt, new Date().toISOString());
+}
+garantirAdministradorPadrao();
+
+function validarCredenciais(usuario, senha) {
+  const nome = texto(usuario, 100);
+  if (!nome || nome.length < 3) return { erro: "Informe um usuário com pelo menos 3 caracteres." };
+  if (typeof senha !== "string" || senha.length < 6) return { erro: "A senha deve ter pelo menos 6 caracteres." };
+  return { usuario: nome, senha };
 }
 
 function texto(valor, limite) {
@@ -176,7 +250,7 @@ function lerCorpo(req) {
 
 function servirArquivo(res, urlPath) {
   let relativo;
-  try { relativo = decodeURIComponent(urlPath === "/" ? "/index.html" : urlPath); } catch (_) { relativo = ""; }
+  try { relativo = decodeURIComponent(urlPath === "/" ? "/login.html" : urlPath); } catch (_) { relativo = ""; }
   const extensao = path.extname(relativo).toLowerCase();
   const arquivo = path.resolve(root, "." + relativo.replace(/\\/g, "/"));
   const relativoSeguro = path.relative(root, arquivo);
@@ -207,6 +281,68 @@ const servidor = http.createServer(async (req, res) => {
     });
     return res.end();
   }
+  if (url.pathname === "/api/login" && req.method === "POST") {
+    try {
+      const corpo = await lerCorpo(req);
+      const validacao = validarCredenciais(corpo.usuario, corpo.senha);
+      if (validacao.erro) return responderJson(res, 400, { erro: validacao.erro });
+      const admin = buscarAdministrador(validacao.usuario);
+      if (admin && senhaConfere(validacao.senha, admin.senha_hash, admin.senha_salt)) {
+        return responderJson(res, 200, { usuario: admin.usuario, tipo: "admin" });
+      }
+      const usuarios = lerUsuarios();
+      const encontrado = usuarios.find(item => normalizarUsuario(item.usuario) === normalizarUsuario(validacao.usuario));
+      if (encontrado && senhaConfere(validacao.senha, encontrado.senhaHash, encontrado.senhaSalt)) {
+        return responderJson(res, 200, { usuario: encontrado.usuario, tipo: "user" });
+      }
+      return responderJson(res, 401, { erro: "Usuário ou senha inválidos." });
+    } catch (erro) { return responderJson(res, erro.statusCode || 400, { erro: erro.message }); }
+  }
+
+  if (url.pathname === "/api/cadastro" && req.method === "POST") {
+    try {
+      const corpo = await lerCorpo(req);
+      const validacao = validarCredenciais(corpo.usuario, corpo.senha);
+      if (validacao.erro) return responderJson(res, 400, { erro: validacao.erro });
+      if (buscarAdministrador(validacao.usuario)) {
+        return responderJson(res, 409, { erro: "Este usuário já existe." });
+      }
+      const usuarios = lerUsuarios();
+      if (usuarios.some(item => normalizarUsuario(item.usuario) === normalizarUsuario(validacao.usuario))) {
+        return responderJson(res, 409, { erro: "Este usuário já existe." });
+      }
+      const { hash, salt } = gerarHashSenha(validacao.senha);
+      const novoUsuario = { usuario: validacao.usuario, senhaHash: hash, senhaSalt: salt, tipo: "user", criadoEm: new Date().toISOString() };
+      usuarios.push(novoUsuario);
+      salvarUsuarios(usuarios);
+      return responderJson(res, 201, { usuario: novoUsuario.usuario, tipo: "user" });
+    } catch (erro) { return responderJson(res, erro.statusCode || 400, { erro: erro.message }); }
+  }
+
+  if (url.pathname === "/api/trocar-senha" && req.method === "POST") {
+    try {
+      const corpo = await lerCorpo(req);
+      const nome = texto(corpo.usuario, 100);
+      const senha = corpo.senha;
+      if (!nome) return responderJson(res, 400, { erro: "Usuário não informado." });
+      if (typeof senha !== "string" || senha.length < 6) return responderJson(res, 400, { erro: "A senha deve ter pelo menos 6 caracteres." });
+      const admin = buscarAdministrador(nome);
+      if (admin) {
+        const { hash, salt } = gerarHashSenha(senha);
+        db.prepare("UPDATE administradores SET senha_hash = ?, senha_salt = ? WHERE id = ?").run(hash, salt, admin.id);
+        return responderJson(res, 200, { ok: true });
+      }
+      const usuarios = lerUsuarios();
+      const indice = usuarios.findIndex(item => normalizarUsuario(item.usuario) === normalizarUsuario(nome));
+      if (indice < 0) return responderJson(res, 404, { erro: "Usuário não encontrado." });
+      const { hash, salt } = gerarHashSenha(senha);
+      usuarios[indice].senhaHash = hash;
+      usuarios[indice].senhaSalt = salt;
+      salvarUsuarios(usuarios);
+      return responderJson(res, 200, { ok: true });
+    } catch (erro) { return responderJson(res, erro.statusCode || 400, { erro: erro.message }); }
+  }
+
   if (url.pathname === "/api/remessas" && req.method === "GET") {
     return responderJson(res, 200, lerRemessas().map(prepararRemessa).filter(Boolean));
   }

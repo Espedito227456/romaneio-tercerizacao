@@ -10,6 +10,10 @@ node_modules/
 
 # Local data and uploads
 data/*.json
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
 !data/.gitkeep
 uploads/
 

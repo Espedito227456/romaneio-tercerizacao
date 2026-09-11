@@ -1,0 +1,228 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #dfe3e3;
+  color: #1d1d1d;
+}
+
+.cadastro-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 16px;
+}
+
+.cadastro-shell {
+  width: 100%;
+  max-width: 420px;
+}
+
+.cadastro-card {
+  width: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  min-height: 60px;
+}
+
+.logo-agi {
+  display: block;
+  width: min(290px, 100%);
+  height: 50px;
+  object-fit: contain;
+}
+
+.brand-tag {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a4f52;
+  transform: translateY(-12px);
+  white-space: nowrap;
+}
+
+.cadastro-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #1f2325;
+}
+
+.field input {
+  width: 100%;
+  height: 42px;
+  padding: 10px 14px;
+  border: 1px solid #cfe0ea;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.24);
+  color: #111;
+  font-size: 18px;
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(67, 114, 146, 0.08);
+}
+
+.field input:focus {
+  border-color: #75b2da;
+  box-shadow: 0 0 0 3px rgba(91, 163, 214, 0.18);
+}
+
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 42px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(116, 123, 129, 0.18);
+  color: #5f686d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.toggle-password svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.toggle-password:hover {
+  background: rgba(116, 123, 129, 0.24);
+}
+
+.toggle-password .eye-shape,
+.toggle-password .eye-pupil,
+.toggle-password .eye-slash {
+  transform-origin: center;
+  transition: opacity 0.18s ease;
+}
+
+.toggle-password .eye-slash {
+  opacity: 1;
+}
+
+.toggle-password.is-visible {
+  background: rgba(34, 119, 77, 0.18);
+  color: #12673d;
+}
+
+.toggle-password.is-visible .eye-slash {
+  opacity: 0;
+}
+
+.toggle-password.is-visible .eye-pupil {
+  opacity: 1;
+}
+
+.toggle-password:not(.is-visible) .eye-pupil {
+  opacity: 0.95;
+}
+
+.form-message {
+  min-height: 18px;
+  margin: -12px 0 0;
+  color: #b12f2f;
+  font-size: 12px;
+  line-height: 1.4;
+  visibility: hidden;
+}
+
+.form-message.visible {
+  visibility: visible;
+}
+
+.form-message.success {
+  color: #0d6b3b;
+}
+
+.submit-btn {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0a7d49 0%, #0b6d3d 100%);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 0 rgba(17, 86, 53, 0.2);
+}
+
+.submit-btn:hover {
+  background: linear-gradient(180deg, #0d8c4d 0%, #0c7343 100%);
+}
+
+.footer-link {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.footer-link a {
+  color: #0a7d49;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.footer-link a:hover {
+  color: #0d8c4d;
+  text-decoration: none;
+}
+
+@media (max-width: 420px) {
+  .brand {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .brand-tag {
+    transform: none;
+  }
+
+  .field label {
+    font-size: 15px;
+  }
+}

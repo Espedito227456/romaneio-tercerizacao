@@ -20,7 +20,7 @@
 
 <div class="container">
 
-    <a class="btn-gray botao-conferencia" href="index.html">Voltar para importar remessa</a>
+    <a class="btn-gray botao-conferencia" href="remessa.html?nova=1" onclick="sessionStorage.removeItem('remessaAtiva')">Selecionar remessa</a>
 
     <!-- BUSCA DA REMESSA -->
 
@@ -196,7 +196,8 @@
 </div>
 
 
-<script src="js/conferencia-remessa.js?v=20260906-2"></script>
+<script defer src="js/auth.js"></script>
+<script defer src="js/conferencia-remessa.js?v=20260906-2"></script>
 
 </body>
 </html>

@@ -10,6 +10,7 @@
         }
 
         header {
+            position: relative;
             background: white;
             color: #222;
             padding: 12px 24px;
@@ -42,6 +43,7 @@
             display: block;
             width: 304px;
             height: 54px;
+            margin-top: 50px;
             object-fit: contain;
         }
 
@@ -51,6 +53,9 @@
         }
 
         .usuario-operador {
+            position: absolute;
+            top: 12px;
+            left: 24px;
             display: flex;
             align-items: center;
             gap: 14px;
@@ -58,7 +63,7 @@
         }
 
         .usuario-operador a {
-            color: #60a5fa;
+            color: #056331;
             font-weight: 700;
             text-decoration: none;
         }
@@ -381,7 +386,8 @@
         @media (max-width: 650px) {
 
             header {
-                display: block;
+                display: flex;
+                flex-direction: column;
                 padding: 10px 16px 12px;
             }
 
@@ -391,8 +397,11 @@
             }
 
             .usuario-operador {
+                position: static;
+                order: -1;
                 justify-content: space-between;
                 gap: 8px;
+                margin-bottom: 8px;
                 font-size: 13px;
             }
 
