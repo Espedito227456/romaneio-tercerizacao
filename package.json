@@ -1,0 +1,9 @@
+{
+  "name": "romaneio-tercerizacao",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor local para remessas e conferencias",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local data and uploads
+data/*.json
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/remessas/
+!data/.gitkeep
+uploads/
+
+# Logs and runtime files
+*.log
+npm-debug.log*
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+server.js.backup*
+*.backup*

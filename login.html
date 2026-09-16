@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AGI Login</title>
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <div class="login-card" role="main">
+        <header class="brand" aria-label="AGI Brasil">
+          <img class="logo-agi" src="assets/agi-logo.svg" alt="AGI Brasil" />
+          <span class="brand-tag">From field to future</span>
+        </header>
+
+        <form id="loginForm" class="login-form" action="#" method="post" novalidate>
+          <div class="field">
+            <label for="usuario">USUÁRIO:</label>
+            <input id="usuario" name="usuario" type="text" autocomplete="username" />
+          </div>
+
+          <div class="field">
+            <label for="senha">SENHA:</label>
+            <div class="password-wrap">
+              <input id="senha" name="senha" type="password" autocomplete="current-password" />
+              <button type="button" class="toggle-password" aria-label="Mostrar senha" title="Mostrar senha">
+                <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path class="eye-shape" d="M1.5 12S5 6 12 6s10.5 6 10.5 6-3.5 6-10.5 6S1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle class="eye-pupil" cx="12" cy="12" r="2.8" fill="currentColor"/>
+                  <path class="eye-slash" d="M4 4L20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <p class="form-message" id="formMessage" aria-live="polite"></p>
+          <button class="submit-btn" type="submit">ENTRAR</button>
+        </form>
+
+        <div class="register-link-wrap">
+          <a class="register-link" href="cadastro.html">Criar usuário</a>
+        </div>
+      </div>
+    </main>
+
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/login.js"></script>
+  </body>
+</html>
