@@ -5,7 +5,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
 const { createClient } = require("@supabase/supabase-js");
-const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -72,7 +72,6 @@ function obterSessao(req) {
 const port = Number(process.env.PORT) || 3000;
 const root = __dirname;
 const dataDirectory = path.join(root, "data");
-const uploadsDirectory = path.join(root, "uploads");
 const dataFile = path.join(dataDirectory, "remessas.json");
 const remessasDirectory = path.join(dataDirectory, "remessas");
 
@@ -218,36 +217,11 @@ function nomeBaseFoto(codigo) {
   return base || "foto";
 }
 
-function criarNomeFoto(codigo) {
-  const base = nomeBaseFoto(codigo);
-  let contador = 1;
-  let nome;
-  do {
-    nome = `${base}${contador === 1 ? "" : `-${contador}`}.jpg`;
-    contador += 1;
-  } while (fs.existsSync(path.join(uploadsDirectory, nome)));
-  return nome;
-}
-
 function prepararFoto(foto) {
   const imagem = typeof foto === "string" ? foto : foto && foto.imagem;
   if (!fotoValida(imagem) && !referenciaFotoValida(imagem)) return null;
   const usuario = typeof foto === "object" && foto !== null ? texto(foto.usuario, 100) : "";
   return { imagem, ...(usuario ? { usuario } : {}) };
-}
-
-function armazenarFotos(remessa) {
-  fs.mkdirSync(uploadsDirectory, { recursive: true });
-  for (const peca of remessa.pecas) {
-    peca.fotos = peca.fotos.map(foto => {
-      if (referenciaFotoValida(foto.imagem)) return foto;
-      const correspondencia = String(foto.imagem).match(/^data:image\/jpeg;base64,([a-z0-9+/=\s]+)$/i);
-      if (!correspondencia) throw new Error("A evidencia deve estar no formato JPEG.");
-      const nome = criarNomeFoto(peca.codigo);
-      fs.writeFileSync(path.join(uploadsDirectory, nome), Buffer.from(correspondencia[1], "base64"));
-      return { ...foto, imagem: `/uploads/${nome}` };
-    });
-  }
 }
 
 function validarRemessa(valor, exigirVersao = false) {
@@ -276,7 +250,7 @@ function validarRemessa(valor, exigirVersao = false) {
     }
     const fotosPreparadas = fotos.map(prepararFoto);
     if (fotosPreparadas.some(foto => !foto)) {
-      return { erro: `Evidencia invalida na peca ${codigo}: a foto nao e um JPEG valido ou uma referencia /uploads/*.jpg.` };
+      return { erro: `Evidencia invalida na peca ${codigo}: a foto nao e um JPEG valido ou uma referencia /uploads/*.jpg cadastrada no R2.` };
     }
     codigos.add(chaveCodigo);
     pecas.push({
@@ -362,8 +336,87 @@ async function enviarFotoR2(remessaNumero, peca, foto) {
   return arquivoKey;
 }
 
+function prefixoFotosR2(remessaNumero, codigo) {
+  return `remessas/${nomeBaseFoto(remessaNumero)}/${nomeBaseFoto(codigo)}/`;
+}
+
+async function listarChavesFotoR2(remessaNumero, codigo) {
+  const prefixo = prefixoFotosR2(remessaNumero, codigo);
+  const chaves = [];
+  let continuationToken;
+  do {
+    const resposta = await r2.send(new ListObjectsV2Command({
+      Bucket: r2Bucket,
+      Prefix: prefixo,
+      ContinuationToken: continuationToken
+    }));
+    for (const objeto of resposta.Contents || []) {
+      if (typeof objeto.Key === "string" && objeto.Key.startsWith(prefixo)) {
+        chaves.push(objeto.Key);
+      }
+    }
+    continuationToken = resposta.IsTruncated ? resposta.NextContinuationToken : undefined;
+  } while (continuationToken);
+  return chaves.sort();
+}
+
+async function resolverArquivoKeyFotoExistente(referencia) {
+  const idFoto = String(referencia || "").match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
+  if (!idFoto) {
+    throw new Error("A referência da foto é inválida.");
+  }
+  const { data: fotoExistente, error: fotoConsultaError } = await supabase
+    .from("fotos_pecas")
+    .select("arquivo_key")
+    .eq("id", idFoto)
+    .maybeSingle();
+  if (fotoConsultaError) throw new Error(`Não foi possível consultar a foto existente: ${fotoConsultaError.message}`);
+  if (!fotoExistente?.arquivo_key) {
+    throw new Error("A foto informada não está cadastrada no Cloudflare R2.");
+  }
+  return fotoExistente.arquivo_key;
+}
+
 function imagemFoto(id) {
   return `/uploads/${id}.jpg`;
+}
+
+function fotoBancoValida(foto) {
+  return !!(foto && foto.id && foto.arquivo_key);
+}
+
+async function reconciliarFotosPeca(remessaNumero, peca) {
+  if (!peca || !peca.id || Number(peca.quantidade_encontrada || 0) < 1) return peca;
+  const fotosAtuais = Array.isArray(peca.fotos_pecas) ? peca.fotos_pecas.filter(fotoBancoValida) : [];
+  const chavesR2 = await listarChavesFotoR2(remessaNumero, peca.codigo);
+  if (!chavesR2.length) {
+    peca.fotos_pecas = fotosAtuais;
+    return peca;
+  }
+  const chavesAtuais = new Set(fotosAtuais.map(foto => foto.arquivo_key));
+  const chavesFaltantes = chavesR2.filter(chave => !chavesAtuais.has(chave));
+  if (!chavesFaltantes.length) {
+    peca.fotos_pecas = fotosAtuais;
+    return peca;
+  }
+  const { data: inseridas, error } = await supabase
+    .from("fotos_pecas")
+    .insert(chavesFaltantes.map(arquivo_key => ({
+      peca_id: peca.id,
+      arquivo_key,
+      nome_original: path.basename(arquivo_key),
+      usuario: null
+    })))
+    .select("id, usuario, arquivo_key");
+  if (error) throw new Error(`Não foi possível reconciliar as fotos da peça ${peca.codigo}: ${error.message}`);
+  peca.fotos_pecas = [...fotosAtuais, ...(inseridas || [])].filter(fotoBancoValida);
+  return peca;
+}
+
+async function reconciliarFotosRemessa(row) {
+  if (!row || !Array.isArray(row.pecas) || !row.numero) return row;
+  await Promise.all(row.pecas.map(peca => reconciliarFotosPeca(row.numero, peca)));
+  return row;
 }
 
 function mapearRemessaBanco(row) {
@@ -383,7 +436,7 @@ function mapearRemessaBanco(row) {
       quantidade: Number(peca.quantidade_solicitada || 0),
       encontrada: Number(peca.quantidade_encontrada || 0),
       pesoKg: Number(peca.peso_kg || 0),
-      fotos: (peca.fotos_pecas || []).map(foto => ({
+      fotos: (peca.fotos_pecas || []).filter(fotoBancoValida).map(foto => ({
         imagem: imagemFoto(foto.id),
         usuario: foto.usuario || ""
       }))
@@ -397,6 +450,7 @@ async function carregarRemessasSupabase() {
     .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key))")
     .order("created_at", { ascending: false });
   if (error) throw new Error(`Não foi possível consultar as remessas: ${error.message}`);
+  await Promise.all((data || []).map(reconciliarFotosRemessa));
   return data.map(mapearRemessaBanco);
 }
 
@@ -408,6 +462,7 @@ async function carregarRemessaSupabase(identificador) {
     .eq(campo, identificador)
     .maybeSingle();
   if (error) throw new Error(`Não foi possível consultar a remessa: ${error.message}`);
+  await reconciliarFotosRemessa(data);
   return data;
 }
 
@@ -436,18 +491,8 @@ async function inserirPecas(remessa, remessaId) {
       const arquivoKey = await enviarFotoR2(remessa.numero, peca, foto);
       let arquivoKeyFinal = arquivoKey;
       if (!arquivoKeyFinal && referenciaFotoValida(foto.imagem)) {
-        const idFoto = foto.imagem.match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
-        if (idFoto) {
-          const { data: fotoExistente, error: fotoConsultaError } = await supabase
-            .from("fotos_pecas")
-            .select("arquivo_key")
-            .eq("id", idFoto)
-            .maybeSingle();
-          if (fotoConsultaError) throw new Error(`Não foi possível consultar a foto existente: ${fotoConsultaError.message}`);
-          arquivoKeyFinal = fotoExistente?.arquivo_key || null;
-        }
+        arquivoKeyFinal = await resolverArquivoKeyFotoExistente(foto.imagem);
       }
-      if (!arquivoKeyFinal) continue;
       const { error: fotoError } = await supabase.from("fotos_pecas").insert({
         peca_id: pecaInserida.id,
         arquivo_key: arquivoKeyFinal,
