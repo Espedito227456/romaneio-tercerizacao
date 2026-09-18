@@ -158,7 +158,11 @@ function restaurarRemessaAtiva() {
 }
 
 function obterFotosPeca(peca) {
-  return Array.isArray(peca?.fotos) ? peca.fotos : [];
+  if (!Array.isArray(peca?.fotos)) return [];
+  return peca.fotos.filter(foto => {
+    const imagem = typeof foto === "string" ? foto : foto?.imagem;
+    return typeof imagem === "string" && (imagem.startsWith("data:image/") || imagem.startsWith("/uploads/"));
+  });
 }
 
 function quantidadeConferidaPeca(peca) {

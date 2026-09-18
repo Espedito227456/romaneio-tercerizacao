@@ -275,9 +275,15 @@ function buscarRemessa() {
 
 function obterFotosPeca(peca) {
 
-    return Array.isArray(peca && peca.fotos)
-        ? peca.fotos
-        : [];
+    if (!Array.isArray(peca && peca.fotos)) {
+        return [];
+    }
+
+    return peca.fotos.filter(function (foto) {
+        const imagem = typeof foto === "string" ? foto : foto && foto.imagem;
+        return typeof imagem === "string" &&
+            (imagem.startsWith("data:image/") || imagem.startsWith("/uploads/"));
+    });
 
 }
 
@@ -959,6 +965,16 @@ function carregarRemessas() {
             remessas = Array.isArray(dados)
                 ? dados.filter(function (remessa) {
                 return remessa && remessa.numero && Array.isArray(remessa.pecas);
+            }).map(function (remessa) {
+                return {
+                    ...remessa,
+                    pecas: remessa.pecas.map(function (peca) {
+                        return {
+                            ...peca,
+                            fotos: obterFotosPeca(peca)
+                        };
+                    })
+                };
             })
                 : [];
             renderizarRemessasRecentes();

@@ -357,6 +357,10 @@ function imagemFoto(id) {
   return `/uploads/${id}.jpg`;
 }
 
+function fotoBancoValida(foto) {
+  return !!(foto && foto.id && foto.arquivo_key);
+}
+
 function mapearRemessaBanco(row) {
   return {
     id: row.id,
@@ -374,7 +378,7 @@ function mapearRemessaBanco(row) {
       quantidade: Number(peca.quantidade_solicitada || 0),
       encontrada: Number(peca.quantidade_encontrada || 0),
       pesoKg: Number(peca.peso_kg || 0),
-      fotos: (peca.fotos_pecas || []).map(foto => ({
+      fotos: (peca.fotos_pecas || []).filter(fotoBancoValida).map(foto => ({
         imagem: imagemFoto(foto.id),
         usuario: foto.usuario || ""
       }))
