@@ -381,7 +381,7 @@ async function salvar() {
       const mensagens = {
         404: "A remessa não foi encontrada no servidor. Faça uma nova busca.",
         413: "A foto ficou muito grande para envio. Tire uma nova foto e tente novamente.",
-        500: "O servidor encontrou um erro ao armazenar a foto. Verifique a pasta uploads e tente novamente."
+        500: "O servidor encontrou um erro ao armazenar a foto no Cloudflare R2. Tente novamente."
       };
       return {
         sucesso: false,

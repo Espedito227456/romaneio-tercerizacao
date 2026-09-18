@@ -72,7 +72,6 @@ function obterSessao(req) {
 const port = Number(process.env.PORT) || 3000;
 const root = __dirname;
 const dataDirectory = path.join(root, "data");
-const uploadsDirectory = path.join(root, "uploads");
 const dataFile = path.join(dataDirectory, "remessas.json");
 const remessasDirectory = path.join(dataDirectory, "remessas");
 
@@ -218,36 +217,11 @@ function nomeBaseFoto(codigo) {
   return base || "foto";
 }
 
-function criarNomeFoto(codigo) {
-  const base = nomeBaseFoto(codigo);
-  let contador = 1;
-  let nome;
-  do {
-    nome = `${base}${contador === 1 ? "" : `-${contador}`}.jpg`;
-    contador += 1;
-  } while (fs.existsSync(path.join(uploadsDirectory, nome)));
-  return nome;
-}
-
 function prepararFoto(foto) {
   const imagem = typeof foto === "string" ? foto : foto && foto.imagem;
   if (!fotoValida(imagem) && !referenciaFotoValida(imagem)) return null;
   const usuario = typeof foto === "object" && foto !== null ? texto(foto.usuario, 100) : "";
   return { imagem, ...(usuario ? { usuario } : {}) };
-}
-
-function armazenarFotos(remessa) {
-  fs.mkdirSync(uploadsDirectory, { recursive: true });
-  for (const peca of remessa.pecas) {
-    peca.fotos = peca.fotos.map(foto => {
-      if (referenciaFotoValida(foto.imagem)) return foto;
-      const correspondencia = String(foto.imagem).match(/^data:image\/jpeg;base64,([a-z0-9+/=\s]+)$/i);
-      if (!correspondencia) throw new Error("A evidencia deve estar no formato JPEG.");
-      const nome = criarNomeFoto(peca.codigo);
-      fs.writeFileSync(path.join(uploadsDirectory, nome), Buffer.from(correspondencia[1], "base64"));
-      return { ...foto, imagem: `/uploads/${nome}` };
-    });
-  }
 }
 
 function validarRemessa(valor, exigirVersao = false) {
@@ -276,7 +250,7 @@ function validarRemessa(valor, exigirVersao = false) {
     }
     const fotosPreparadas = fotos.map(prepararFoto);
     if (fotosPreparadas.some(foto => !foto)) {
-      return { erro: `Evidencia invalida na peca ${codigo}: a foto nao e um JPEG valido ou uma referencia /uploads/*.jpg.` };
+      return { erro: `Evidencia invalida na peca ${codigo}: a foto nao e um JPEG valido ou uma referencia /uploads/*.jpg cadastrada no R2.` };
     }
     codigos.add(chaveCodigo);
     pecas.push({
@@ -362,6 +336,23 @@ async function enviarFotoR2(remessaNumero, peca, foto) {
   return arquivoKey;
 }
 
+async function resolverArquivoKeyFotoExistente(referencia) {
+  const idFoto = String(referencia || "").match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
+  if (!idFoto) {
+    throw new Error("A referência da foto é inválida.");
+  }
+  const { data: fotoExistente, error: fotoConsultaError } = await supabase
+    .from("fotos_pecas")
+    .select("arquivo_key")
+    .eq("id", idFoto)
+    .maybeSingle();
+  if (fotoConsultaError) throw new Error(`Não foi possível consultar a foto existente: ${fotoConsultaError.message}`);
+  if (!fotoExistente?.arquivo_key) {
+    throw new Error("A foto informada não está cadastrada no Cloudflare R2.");
+  }
+  return fotoExistente.arquivo_key;
+}
+
 function imagemFoto(id) {
   return `/uploads/${id}.jpg`;
 }
@@ -436,18 +427,8 @@ async function inserirPecas(remessa, remessaId) {
       const arquivoKey = await enviarFotoR2(remessa.numero, peca, foto);
       let arquivoKeyFinal = arquivoKey;
       if (!arquivoKeyFinal && referenciaFotoValida(foto.imagem)) {
-        const idFoto = foto.imagem.match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
-        if (idFoto) {
-          const { data: fotoExistente, error: fotoConsultaError } = await supabase
-            .from("fotos_pecas")
-            .select("arquivo_key")
-            .eq("id", idFoto)
-            .maybeSingle();
-          if (fotoConsultaError) throw new Error(`Não foi possível consultar a foto existente: ${fotoConsultaError.message}`);
-          arquivoKeyFinal = fotoExistente?.arquivo_key || null;
-        }
+        arquivoKeyFinal = await resolverArquivoKeyFotoExistente(foto.imagem);
       }
-      if (!arquivoKeyFinal) continue;
       const { error: fotoError } = await supabase.from("fotos_pecas").insert({
         peca_id: pecaInserida.id,
         arquivo_key: arquivoKeyFinal,

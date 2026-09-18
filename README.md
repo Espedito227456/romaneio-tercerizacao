@@ -11,7 +11,7 @@ Aplicacao web para importar romaneios em Excel, acompanhar remessas e registrar 
 - Conferencia por codigo da peca com leitura manual ou leitor de codigo.
 - Registro de quantidade encontrada e peso conferido em tempo real.
 - Adicao de ate 5 fotos por conferencia com autoria do usuario logado (admin ou comum).
-- Compressao automatica de fotos (JPEG, 1000px, qualidade 0.75) e armazenamento em `uploads/` com referencia leve no JSON.
+- Compressao automatica de fotos (JPEG, 1000px, qualidade 0.75) com armazenamento obrigatorio no Cloudflare R2 e referencia leve exposta pela rota `uploads/`.
 - Registro de data/hora de inicio da conferencia e data/hora de finalizacao da remessa.
 - Consulta de progresso, status, pecas pendentes/conferidas e galeria de evidencias.
 - Autenticacao com controle de usuarios comuns e administradores.
@@ -62,9 +62,7 @@ js/                         Logica do navegador
 
 ## Persistencia atual
 
-A versao atual usa `data/remessas.json` para os dados das remessas e `uploads/` para as fotos JPEG. O JSON armazena somente a referencia do arquivo e o usuario que registrou cada nova foto. Fotos antigas sem autoria aparecem como "Nao identificado". Esse modelo e adequado para desenvolvimento local, mas nao e recomendado para uso simultaneo em varios dispositivos.
-
-A proxima etapa planejada e migrar os dados para o Supabase e armazenar as fotos JPEG no Cloudflare R2, usando a API publicada no Vercel.
+A versao atual usa Supabase para os dados das remessas e Cloudflare R2 para as fotos JPEG. A API armazena cada nova foto diretamente no R2, persiste no banco apenas a chave do objeto e expõe a evidência para o front-end pela rota `/uploads/:id.jpg`. Fotos antigas sem autoria aparecem como "Nao identificado".
 
 ## Desenvolvimento
 
