@@ -1,9 +1,19 @@
+require("dotenv").config();
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
-const { DatabaseSync } = require("node:sqlite");
+const { createClient } = require("@supabase/supabase-js");
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  throw new Error("SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY são obrigatórias.");
+}
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: { persistSession: false, autoRefreshToken: false }
+});
 
 const clientesTempoReal = new Set();
 
@@ -56,8 +66,6 @@ function caminhoRemessa(numero) {
   if (!nome || nome === "." || nome === ".." || nome.includes("/") || nome.includes("\\")) return null;
   return path.join(remessasDirectory, `${nome}.json`);
 }
-const usuariosFile = path.join(dataDirectory, "usuarios.json");
-const dbFile = path.join(dataDirectory, "administradores.db");
 const limiteCorpo = 10 * 1024 * 1024;
 const tiposPublicos = new Set([".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico"]);
 
@@ -102,39 +110,6 @@ function salvarRemessas(remessas) {
   }
 }
 
-function lerUsuarios() {
-  try {
-    const dados = JSON.parse(fs.readFileSync(usuariosFile, "utf8"));
-    return Array.isArray(dados) ? dados : [];
-  } catch (_) { return []; }
-}
-
-function salvarUsuarios(usuarios) {
-  fs.mkdirSync(dataDirectory, { recursive: true });
-  const temporario = `${usuariosFile}.${process.pid}.tmp`;
-  try {
-    fs.writeFileSync(temporario, JSON.stringify(usuarios, null, 2), "utf8");
-    fs.renameSync(temporario, usuariosFile);
-  } catch (erro) {
-    try { fs.rmSync(temporario, { force: true }); } catch (_) {}
-    throw erro;
-  }
-}
-
-// Banco de dados (SQLite) apenas para as credenciais do administrador.
-fs.mkdirSync(dataDirectory, { recursive: true });
-const db = new DatabaseSync(dbFile);
-db.exec(
-  "CREATE TABLE IF NOT EXISTS administradores (" +
-  "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-  "usuario TEXT NOT NULL, " +
-  "usuario_normalizado TEXT NOT NULL UNIQUE, " +
-  "senha_hash TEXT NOT NULL, " +
-  "senha_salt TEXT NOT NULL, " +
-  "criado_em TEXT NOT NULL" +
-  ")"
-);
-
 function normalizarUsuario(valor) {
   return String(valor || "").trim().toLowerCase();
 }
@@ -151,19 +126,52 @@ function senhaConfere(senha, hash, salt) {
   return calculado.length === armazenado.length && crypto.timingSafeEqual(calculado, armazenado);
 }
 
-function buscarAdministrador(usuario) {
-  return db.prepare("SELECT * FROM administradores WHERE usuario_normalizado = ?").get(normalizarUsuario(usuario));
+async function buscarUsuario(usuario) {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("usuario, usuario_normalizado, senha_hash, senha_salt, tipo, ativo")
+    .eq("usuario_normalizado", normalizarUsuario(usuario))
+    .maybeSingle();
+
+  if (error) throw new Error(`Não foi possível consultar o usuário: ${error.message}`);
+  return data;
 }
 
-const ADMIN_PADRAO = { usuario: "Charles Souza", senha: "Agi2026" };
+async function criarUsuario(usuario, senhaHash, senhaSalt) {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .insert({
+      usuario,
+      usuario_normalizado: normalizarUsuario(usuario),
+      senha_hash: senhaHash,
+      senha_salt: senhaSalt,
+      tipo: "usuario",
+      ativo: true
+    })
+    .select("usuario, tipo, ativo")
+    .single();
 
-function garantirAdministradorPadrao() {
-  if (buscarAdministrador(ADMIN_PADRAO.usuario)) return;
-  const { hash, salt } = gerarHashSenha(ADMIN_PADRAO.senha);
-  db.prepare("INSERT INTO administradores (usuario, usuario_normalizado, senha_hash, senha_salt, criado_em) VALUES (?, ?, ?, ?, ?)")
-    .run(ADMIN_PADRAO.usuario, normalizarUsuario(ADMIN_PADRAO.usuario), hash, salt, new Date().toISOString());
+  if (error) {
+    if (error.code === "23505") {
+      return { duplicado: true };
+    }
+    throw new Error(`Não foi possível cadastrar o usuário: ${error.message}`);
+  }
+  return data;
 }
-garantirAdministradorPadrao();
+
+async function atualizarSenhaUsuario(usuario, senhaHash, senhaSalt) {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .update({ senha_hash: senhaHash, senha_salt: senhaSalt })
+    .eq("usuario_normalizado", normalizarUsuario(usuario))
+    .eq("ativo", true)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new Error(`Não foi possível atualizar a senha: ${error.message}`);
+  return data;
+}
 
 function validarCredenciais(usuario, senha) {
   const nome = texto(usuario, 100);
@@ -404,16 +412,11 @@ const servidor = http.createServer(async (req, res) => {
       const corpo = await lerCorpo(req);
       const validacao = validarCredenciais(corpo.usuario, corpo.senha);
       if (validacao.erro) return responderJson(res, 400, { erro: validacao.erro });
-      const admin = buscarAdministrador(validacao.usuario);
-      if (admin && senhaConfere(validacao.senha, admin.senha_hash, admin.senha_salt)) {
-        const token = criarSessao(admin.usuario, "admin");
-        return responderJson(res, 200, { usuario: admin.usuario, tipo: "admin", token });
-      }
-      const usuarios = lerUsuarios();
-      const encontrado = usuarios.find(item => normalizarUsuario(item.usuario) === normalizarUsuario(validacao.usuario));
-      if (encontrado && senhaConfere(validacao.senha, encontrado.senhaHash, encontrado.senhaSalt)) {
-        const token = criarSessao(encontrado.usuario, "user");
-        return responderJson(res, 200, { usuario: encontrado.usuario, tipo: "user", token });
+      const encontrado = await buscarUsuario(validacao.usuario);
+      if (encontrado && encontrado.ativo && senhaConfere(validacao.senha, encontrado.senha_hash, encontrado.senha_salt)) {
+        const tipo = encontrado.tipo === "admin" ? "admin" : "user";
+        const token = criarSessao(encontrado.usuario, tipo);
+        return responderJson(res, 200, { usuario: encontrado.usuario, tipo, token });
       }
       return responderJson(res, 401, { erro: "Usuário ou senha inválidos." });
     } catch (erro) { return responderJson(res, erro.statusCode || 400, { erro: erro.message }); }
@@ -424,17 +427,11 @@ const servidor = http.createServer(async (req, res) => {
       const corpo = await lerCorpo(req);
       const validacao = validarCredenciais(corpo.usuario, corpo.senha);
       if (validacao.erro) return responderJson(res, 400, { erro: validacao.erro });
-      if (buscarAdministrador(validacao.usuario)) {
-        return responderJson(res, 409, { erro: "Este usuário já existe." });
-      }
-      const usuarios = lerUsuarios();
-      if (usuarios.some(item => normalizarUsuario(item.usuario) === normalizarUsuario(validacao.usuario))) {
-        return responderJson(res, 409, { erro: "Este usuário já existe." });
-      }
       const { hash, salt } = gerarHashSenha(validacao.senha);
-      const novoUsuario = { usuario: validacao.usuario, senhaHash: hash, senhaSalt: salt, tipo: "user", criadoEm: new Date().toISOString() };
-      usuarios.push(novoUsuario);
-      salvarUsuarios(usuarios);
+      const novoUsuario = await criarUsuario(validacao.usuario, hash, salt);
+      if (novoUsuario.duplicado) {
+        return responderJson(res, 409, { erro: "Este usuário já existe." });
+      }
       return responderJson(res, 201, { usuario: novoUsuario.usuario, tipo: "user" });
     } catch (erro) { return responderJson(res, erro.statusCode || 400, { erro: erro.message }); }
   }
@@ -446,19 +443,9 @@ const servidor = http.createServer(async (req, res) => {
       const senha = corpo.senha;
       if (!nome) return responderJson(res, 400, { erro: "Usuário não informado." });
       if (typeof senha !== "string" || senha.length < 6) return responderJson(res, 400, { erro: "A senha deve ter pelo menos 6 caracteres." });
-      const admin = buscarAdministrador(nome);
-      if (admin) {
-        const { hash, salt } = gerarHashSenha(senha);
-        db.prepare("UPDATE administradores SET senha_hash = ?, senha_salt = ? WHERE id = ?").run(hash, salt, admin.id);
-        return responderJson(res, 200, { ok: true });
-      }
-      const usuarios = lerUsuarios();
-      const indice = usuarios.findIndex(item => normalizarUsuario(item.usuario) === normalizarUsuario(nome));
-      if (indice < 0) return responderJson(res, 404, { erro: "Usuário não encontrado." });
       const { hash, salt } = gerarHashSenha(senha);
-      usuarios[indice].senhaHash = hash;
-      usuarios[indice].senhaSalt = salt;
-      salvarUsuarios(usuarios);
+      const atualizado = await atualizarSenhaUsuario(nome, hash, salt);
+      if (!atualizado) return responderJson(res, 404, { erro: "Usuário não encontrado." });
       return responderJson(res, 200, { ok: true });
     } catch (erro) { return responderJson(res, erro.statusCode || 400, { erro: erro.message }); }
   }

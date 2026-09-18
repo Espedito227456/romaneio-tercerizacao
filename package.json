@@ -5,5 +5,9 @@
   "description": "Servidor local para remessas e conferencias",
   "scripts": {
     "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "dotenv": "^17.4.2"
   }
 }
