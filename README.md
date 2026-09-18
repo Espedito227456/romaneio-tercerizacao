@@ -15,7 +15,7 @@ Aplicacao web para importar romaneios em Excel, acompanhar remessas e registrar 
 - Registro de data/hora de inicio da conferencia e data/hora de finalizacao da remessa.
 - Consulta de progresso, status, pecas pendentes/conferidas e galeria de evidencias.
 - Autenticacao com controle de usuarios comuns e administradores.
-- Persistencia local em arquivo JSON durante a fase atual.
+- Persistencia das remessas no Supabase com evidencias fotograficas no Cloudflare R2.
 
 ## Requisitos
 
@@ -51,7 +51,7 @@ conferencia-remessa.html    Consulta de remessas e fotos
 server.js                   Servidor HTTP e API local
 css/                        Folhas de estilo
 js/                         Logica do navegador
- data/remessas.json         Armazenamento local atual
+ Supabase + Cloudflare R2   Persistencia de remessas e fotos
 ```
 
 ## API local
