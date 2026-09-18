@@ -4,7 +4,8 @@
   "private": true,
   "description": "Servidor local para remessas e conferencias",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "cleanup:expired": "node scripts/limpar-registros-expirados.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1135.0",
