@@ -5,7 +5,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
 const { createClient } = require("@supabase/supabase-js");
-const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -336,6 +336,30 @@ async function enviarFotoR2(remessaNumero, peca, foto) {
   return arquivoKey;
 }
 
+function prefixoFotosR2(remessaNumero, codigo) {
+  return `remessas/${nomeBaseFoto(remessaNumero)}/${nomeBaseFoto(codigo)}/`;
+}
+
+async function listarChavesFotoR2(remessaNumero, codigo) {
+  const prefixo = prefixoFotosR2(remessaNumero, codigo);
+  const chaves = [];
+  let continuationToken;
+  do {
+    const resposta = await r2.send(new ListObjectsV2Command({
+      Bucket: r2Bucket,
+      Prefix: prefixo,
+      ContinuationToken: continuationToken
+    }));
+    for (const objeto of resposta.Contents || []) {
+      if (typeof objeto.Key === "string" && objeto.Key.startsWith(prefixo)) {
+        chaves.push(objeto.Key);
+      }
+    }
+    continuationToken = resposta.IsTruncated ? resposta.NextContinuationToken : undefined;
+  } while (continuationToken);
+  return chaves.sort();
+}
+
 async function resolverArquivoKeyFotoExistente(referencia) {
   const idFoto = String(referencia || "").match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
   if (!idFoto) {
@@ -359,6 +383,40 @@ function imagemFoto(id) {
 
 function fotoBancoValida(foto) {
   return !!(foto && foto.id && foto.arquivo_key);
+}
+
+async function reconciliarFotosPeca(remessaNumero, peca) {
+  if (!peca || !peca.id || Number(peca.quantidade_encontrada || 0) < 1) return peca;
+  const fotosAtuais = Array.isArray(peca.fotos_pecas) ? peca.fotos_pecas.filter(fotoBancoValida) : [];
+  const chavesR2 = await listarChavesFotoR2(remessaNumero, peca.codigo);
+  if (!chavesR2.length) {
+    peca.fotos_pecas = fotosAtuais;
+    return peca;
+  }
+  const chavesAtuais = new Set(fotosAtuais.map(foto => foto.arquivo_key));
+  const chavesFaltantes = chavesR2.filter(chave => !chavesAtuais.has(chave));
+  if (!chavesFaltantes.length) {
+    peca.fotos_pecas = fotosAtuais;
+    return peca;
+  }
+  const { data: inseridas, error } = await supabase
+    .from("fotos_pecas")
+    .insert(chavesFaltantes.map(arquivo_key => ({
+      peca_id: peca.id,
+      arquivo_key,
+      nome_original: path.basename(arquivo_key),
+      usuario: null
+    })))
+    .select("id, usuario, arquivo_key");
+  if (error) throw new Error(`Não foi possível reconciliar as fotos da peça ${peca.codigo}: ${error.message}`);
+  peca.fotos_pecas = [...fotosAtuais, ...(inseridas || [])].filter(fotoBancoValida);
+  return peca;
+}
+
+async function reconciliarFotosRemessa(row) {
+  if (!row || !Array.isArray(row.pecas) || !row.numero) return row;
+  await Promise.all(row.pecas.map(peca => reconciliarFotosPeca(row.numero, peca)));
+  return row;
 }
 
 function mapearRemessaBanco(row) {
@@ -392,6 +450,7 @@ async function carregarRemessasSupabase() {
     .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key))")
     .order("created_at", { ascending: false });
   if (error) throw new Error(`Não foi possível consultar as remessas: ${error.message}`);
+  await Promise.all((data || []).map(reconciliarFotosRemessa));
   return data.map(mapearRemessaBanco);
 }
 
@@ -403,6 +462,7 @@ async function carregarRemessaSupabase(identificador) {
     .eq(campo, identificador)
     .maybeSingle();
   if (error) throw new Error(`Não foi possível consultar a remessa: ${error.message}`);
+  await reconciliarFotosRemessa(data);
   return data;
 }
 
