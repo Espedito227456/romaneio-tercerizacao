@@ -5,6 +5,8 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { URL } = require("node:url");
 const { createClient } = require("@supabase/supabase-js");
+const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,6 +15,19 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 }
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false }
+});
+
+const r2Bucket = process.env.R2_BUCKET_NAME;
+const r2Endpoint = process.env.R2_ENDPOINT;
+const r2AccessKeyId = process.env.R2_ACCESS_KEY_ID;
+const r2SecretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+if (!r2Bucket || !r2Endpoint || !r2AccessKeyId || !r2SecretAccessKey) {
+  throw new Error("As variáveis do R2 são obrigatórias.");
+}
+const r2 = new S3Client({
+  region: "auto",
+  endpoint: r2Endpoint,
+  credentials: { accessKeyId: r2AccessKeyId, secretAccessKey: r2SecretAccessKey }
 });
 
 const clientesTempoReal = new Set();
@@ -310,6 +325,169 @@ function prepararRemessa(remessa) {
   return validacao.remessa || null;
 }
 
+function converterDataBanco(valor) {
+  const textoData = texto(valor, 100);
+  const correspondencia = textoData.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+  if (!correspondencia) return null;
+  const [, dia, mes, ano, hora = "00", minuto = "00"] = correspondencia;
+  return `${ano}-${mes}-${dia} ${hora}:${minuto}:00`;
+}
+
+function formatarDataAplicacao(valor) {
+  if (!valor) return "";
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return String(valor);
+  const dois = numero => String(numero).padStart(2, "0");
+  return `${dois(data.getUTCDate())}/${dois(data.getUTCMonth() + 1)}/${data.getUTCFullYear()} ${dois(data.getUTCHours())}:${dois(data.getUTCMinutes())}`;
+}
+
+function chaveFoto(remessaNumero, codigo, nome) {
+  return `remessas/${nomeBaseFoto(remessaNumero)}/${nomeBaseFoto(codigo)}/${crypto.randomUUID()}-${nome}`;
+}
+
+async function enviarFotoR2(remessaNumero, peca, foto) {
+  const correspondencia = String(foto.imagem).match(/^data:image\/jpeg;base64,([a-z0-9+/=\s]+)$/i);
+  if (!correspondencia) {
+    if (referenciaFotoValida(foto.imagem)) return null;
+    throw new Error("A evidencia deve estar no formato JPEG.");
+  }
+  const nome = `${nomeBaseFoto(peca.codigo)}.jpg`;
+  const arquivoKey = chaveFoto(remessaNumero, peca.codigo, nome);
+  await r2.send(new PutObjectCommand({
+    Bucket: r2Bucket,
+    Key: arquivoKey,
+    Body: Buffer.from(correspondencia[1], "base64"),
+    ContentType: "image/jpeg"
+  }));
+  return arquivoKey;
+}
+
+function imagemFoto(id) {
+  return `/uploads/${id}.jpg`;
+}
+
+function mapearRemessaBanco(row) {
+  return {
+    id: row.id,
+    numero: row.numero,
+    semana: row.semana || "—",
+    ...(row.data_criacao ? { dataCriacao: formatarDataAplicacao(row.data_criacao) } : {}),
+    ...(row.data_finalizacao ? { dataFinalizacao: formatarDataAplicacao(row.data_finalizacao) } : {}),
+    pesoTotalKg: Number(row.peso_total_kg || 0),
+    informacoes: {},
+    versao: row.versao || 0,
+    pecas: (row.pecas || []).map(peca => ({
+      id: peca.id,
+      codigo: peca.codigo || "",
+      descricao: peca.descricao || "",
+      quantidade: Number(peca.quantidade_solicitada || 0),
+      encontrada: Number(peca.quantidade_encontrada || 0),
+      pesoKg: Number(peca.peso_kg || 0),
+      fotos: (peca.fotos_pecas || []).map(foto => ({
+        imagem: imagemFoto(foto.id),
+        usuario: foto.usuario || ""
+      }))
+    }))
+  };
+}
+
+async function carregarRemessasSupabase() {
+  const { data, error } = await supabase
+    .from("remessas")
+    .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key))")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(`Não foi possível consultar as remessas: ${error.message}`);
+  return data.map(mapearRemessaBanco);
+}
+
+async function carregarRemessaSupabase(identificador) {
+  const campo = /^[0-9a-f-]{36}$/i.test(identificador) ? "id" : "numero";
+  const { data, error } = await supabase
+    .from("remessas")
+    .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key))")
+    .eq(campo, identificador)
+    .maybeSingle();
+  if (error) throw new Error(`Não foi possível consultar a remessa: ${error.message}`);
+  return data;
+}
+
+async function inserirPecas(remessa, remessaId) {
+  for (const peca of remessa.pecas) {
+    const { data: pecaInserida, error } = await supabase.from("pecas").insert({
+      remessa_id: remessaId,
+      codigo: peca.codigo,
+      descricao: peca.descricao,
+      quantidade_solicitada: peca.quantidade,
+      quantidade_encontrada: peca.encontrada,
+      peso_kg: peca.pesoKg
+    }).select("id").single();
+    if (error) throw new Error(`Não foi possível salvar a peça ${peca.codigo}: ${error.message}`);
+
+    if (peca.encontrada > 0) {
+      const { error: conferenciaError } = await supabase.from("conferencias").insert({
+        peca_id: pecaInserida.id,
+        quantidade: peca.encontrada,
+        status: peca.encontrada === peca.quantidade ? "conferida" : "parcial"
+      });
+      if (conferenciaError) throw new Error(`Não foi possível salvar a conferência: ${conferenciaError.message}`);
+    }
+
+    for (const foto of peca.fotos) {
+      const arquivoKey = await enviarFotoR2(remessa.numero, peca, foto);
+      let arquivoKeyFinal = arquivoKey;
+      if (!arquivoKeyFinal && referenciaFotoValida(foto.imagem)) {
+        const idFoto = foto.imagem.match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
+        if (idFoto) {
+          const { data: fotoExistente, error: fotoConsultaError } = await supabase
+            .from("fotos_pecas")
+            .select("arquivo_key")
+            .eq("id", idFoto)
+            .maybeSingle();
+          if (fotoConsultaError) throw new Error(`Não foi possível consultar a foto existente: ${fotoConsultaError.message}`);
+          arquivoKeyFinal = fotoExistente?.arquivo_key || null;
+        }
+      }
+      if (!arquivoKeyFinal) continue;
+      const { error: fotoError } = await supabase.from("fotos_pecas").insert({
+        peca_id: pecaInserida.id,
+        arquivo_key: arquivoKeyFinal,
+        nome_original: `${nomeBaseFoto(peca.codigo)}.jpg`,
+        usuario: foto.usuario || null
+      });
+      if (fotoError) throw new Error(`Não foi possível salvar a foto da peça ${peca.codigo}: ${fotoError.message}`);
+    }
+  }
+}
+
+async function salvarRemessaSupabase(remessa, id = null) {
+  const dados = {
+    numero: remessa.numero,
+    semana: remessa.semana || null,
+    data_criacao: converterDataBanco(remessa.dataCriacao),
+    peso_total_kg: remessa.pesoTotalKg,
+    versao: remessa.versao,
+    data_finalizacao: converterDataBanco(remessa.dataFinalizacao)
+  };
+  let remessaSalva;
+  if (id) {
+    const { data, error } = await supabase.from("remessas").update(dados).eq("id", id).eq("versao", remessa.versao - 1).select("id").maybeSingle();
+    if (error) throw new Error(`Não foi possível atualizar a remessa: ${error.message}`);
+    if (!data) return null;
+    remessaSalva = data;
+    const { error: deleteError } = await supabase.from("pecas").delete().eq("remessa_id", id);
+    if (deleteError) throw new Error(`Não foi possível substituir as peças: ${deleteError.message}`);
+  } else {
+    const { data, error } = await supabase.from("remessas").insert(dados).select("id").single();
+    if (error) {
+      if (error.code === "23505") return { duplicada: true };
+      throw new Error(`Não foi possível criar a remessa: ${error.message}`);
+    }
+    remessaSalva = data;
+  }
+  await inserirPecas(remessa, remessaSalva.id);
+  return remessaSalva.id;
+}
+
 function emitirTempoReal(tipo, remessa) {
   const mensagem = `event: ${tipo}\ndata: ${JSON.stringify(remessa)}\n\n`;
   for (const res of clientesTempoReal) {
@@ -451,7 +629,11 @@ const servidor = http.createServer(async (req, res) => {
   }
 
   if (url.pathname === "/api/remessas" && req.method === "GET") {
-    return responderJson(res, 200, lerRemessasIndividuais().map(prepararRemessa).filter(Boolean));
+    try {
+      return responderJson(res, 200, await carregarRemessasSupabase());
+    } catch (erro) {
+      return responderJson(res, 500, { erro: erro.message });
+    }
   }
 
   if (url.pathname === "/api/tempo-real" && req.method === "GET") {
@@ -475,29 +657,12 @@ const servidor = http.createServer(async (req, res) => {
       const validacao = validarRemessa(corpo);
       if (validacao.erro) return responderJson(res, 400, { erro: validacao.erro });
       const remessa = validacao.remessa;
-
-      const remessas = lerRemessasIndividuais();
-      if (remessas.some(item => {
-        const preparada = prepararRemessa(item);
-        return preparada && normalizarIdentificador(preparada.numero) === normalizarIdentificador(remessa.numero);
-      })) {
-        return responderJson(res, 409, { erro: "Ja existe uma remessa com este numero." });
-      }
-
-      remessa.id = gerarId();
-      while (remessas.some(item => item && String(item.id || "") === remessa.id)) {
-        remessa.id = gerarId();
-      }
-
-      const arquivoRemessa = caminhoRemessa(remessa.numero);
-      if (!arquivoRemessa) return responderJson(res, 400, { erro: "Numero de remessa invalido." });
-
-      armazenarFotos(remessa);
-      fs.mkdirSync(remessasDirectory, { recursive: true });
-      fs.writeFileSync(arquivoRemessa, JSON.stringify(remessa, null, 2), "utf8");
-
-      emitirTempoReal("remessa:criada", remessa);
-      return responderJson(res, 201, remessa);
+      const id = await salvarRemessaSupabase(remessa);
+      if (id && id.duplicada) return responderJson(res, 409, { erro: "Ja existe uma remessa com este numero." });
+      const salva = await carregarRemessaSupabase(id);
+      const resposta = mapearRemessaBanco(salva);
+      emitirTempoReal("remessa:criada", resposta);
+      return responderJson(res, 201, resposta);
     } catch (erro) {
       return responderJson(res, erro.statusCode || 400, { erro: erro.message });
     }
@@ -509,15 +674,9 @@ const servidor = http.createServer(async (req, res) => {
       const corpo = await lerCorpo(req);
       const identificador = decodeURIComponent(correspondencia[1]);
 
-      const remessas = lerRemessasIndividuais();
-      const indice = remessas.findIndex(item =>
-        item && (String(item.id || "") === identificador || String(item.numero || "") === identificador)
-      );
-
-      if (indice < 0) return responderJson(res, 404, { erro: "Remessa nao encontrada." });
-
-      const atual = prepararRemessa(remessas[indice]);
-      if (!atual) return responderJson(res, 500, { erro: "Remessa armazenada invalida." });
+      const atualBanco = await carregarRemessaSupabase(identificador);
+      if (!atualBanco) return responderJson(res, 404, { erro: "Remessa nao encontrada." });
+      const atual = mapearRemessaBanco(atualBanco);
 
       const validacao = validarRemessa(corpo, true);
       if (validacao.erro) return responderJson(res, 400, { erro: validacao.erro });
@@ -532,19 +691,19 @@ const servidor = http.createServer(async (req, res) => {
         });
       }
 
-      remessa.id = atual.id;
       remessa.versao = atual.versao + 1;
-
-      const arquivoRemessa = caminhoRemessa(atual.numero);
-      if (!arquivoRemessa) {
-        return responderJson(res, 400, { erro: "Numero de remessa invalido." });
+      const id = await salvarRemessaSupabase(remessa, atual.id);
+      if (!id) {
+        const concorrente = await carregarRemessaSupabase(atual.id);
+        return responderJson(res, 409, {
+          erro: "A remessa foi atualizada por outro usuario.",
+          remessa: concorrente ? mapearRemessaBanco(concorrente) : atual
+        });
       }
-
-      armazenarFotos(remessa);
-      fs.writeFileSync(arquivoRemessa, JSON.stringify(remessa, null, 2), "utf8");
-
-      emitirTempoReal("remessa:atualizada", remessa);
-      return responderJson(res, 200, remessa);
+      const salva = await carregarRemessaSupabase(id);
+      const resposta = mapearRemessaBanco(salva);
+      emitirTempoReal("remessa:atualizada", resposta);
+      return responderJson(res, 200, resposta);
     } catch (erro) {
       return responderJson(res, erro.statusCode || 400, { erro: erro.message });
     }
@@ -559,21 +718,13 @@ const servidor = http.createServer(async (req, res) => {
     }
     try {
       const identificador = decodeURIComponent(correspondenciaDelete[1]);
-      const remessas = lerRemessasIndividuais();
-      const remessa = remessas.find(item =>
-        item && (String(item.id || "") === identificador || String(item.numero || "") === identificador)
-      );
-
-      if (!remessa) {
+      const remessaBanco = await carregarRemessaSupabase(identificador);
+      if (!remessaBanco) {
         return responderJson(res, 404, { erro: "Remessa nao encontrada." });
       }
-
-      const arquivoRemessa = caminhoRemessa(remessa.numero);
-      if (!arquivoRemessa || !fs.existsSync(arquivoRemessa)) {
-        return responderJson(res, 404, { erro: "Arquivo da remessa nao encontrado." });
-      }
-
-      fs.unlinkSync(arquivoRemessa);
+      const remessa = mapearRemessaBanco(remessaBanco);
+      const { error } = await supabase.from("remessas").delete().eq("id", remessaBanco.id);
+      if (error) throw new Error(`Não foi possível excluir a remessa: ${error.message}`);
       emitirTempoReal("remessa:excluida", remessa);
       return responderJson(res, 200, {
         mensagem: "Remessa excluida com sucesso.",
@@ -581,6 +732,23 @@ const servidor = http.createServer(async (req, res) => {
       });
     } catch (erro) {
       return responderJson(res, erro.statusCode || 400, { erro: erro.message });
+    }
+  }
+
+  const fotoCorrespondencia = url.pathname.match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i);
+  if (fotoCorrespondencia && req.method === "GET") {
+    try {
+      const { data, error } = await supabase.from("fotos_pecas").select("arquivo_key").eq("id", fotoCorrespondencia[1]).maybeSingle();
+      if (error) throw new Error(`Não foi possível consultar a foto: ${error.message}`);
+      if (!data) {
+        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+        return res.end("Foto nao encontrada.");
+      }
+      const signedUrl = await getSignedUrl(r2, new GetObjectCommand({ Bucket: r2Bucket, Key: data.arquivo_key }), { expiresIn: 300 });
+      res.writeHead(302, { Location: signedUrl, "Cache-Control": "private, max-age=240" });
+      return res.end();
+    } catch (erro) {
+      return responderJson(res, 500, { erro: erro.message });
     }
   }
 
