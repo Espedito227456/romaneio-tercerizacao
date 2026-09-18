@@ -273,6 +273,100 @@ function buscarRemessa() {
 }
 
 
+function obterFotosPeca(peca) {
+
+    return Array.isArray(peca && peca.fotos)
+        ? peca.fotos
+        : [];
+
+}
+
+
+function quantidadeConferidaPeca(peca) {
+
+    return Number(peca && peca.encontrada) >= Number(peca && peca.quantidade);
+
+}
+
+
+function pecaConcluida(peca) {
+
+    return quantidadeConferidaPeca(peca) && obterFotosPeca(peca).length > 0;
+
+}
+
+
+function pecaComFotoPendente(peca) {
+
+    return quantidadeConferidaPeca(peca) && obterFotosPeca(peca).length === 0;
+
+}
+
+
+function remessaConcluida() {
+
+    return !!remessaAtual &&
+        remessaAtual.pecas.length > 0 &&
+        remessaAtual.pecas.every(pecaConcluida);
+
+}
+
+
+function obterDataHoraAtualFormatada() {
+
+    const agora = new Date();
+    const dia = String(agora.getDate()).padStart(2, "0");
+    const mes = String(agora.getMonth() + 1).padStart(2, "0");
+    const ano = agora.getFullYear();
+    const horas = String(agora.getHours()).padStart(2, "0");
+    const minutos = String(agora.getMinutes()).padStart(2, "0");
+
+    return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+
+}
+
+
+function restaurarDataFinalizacao(valorAnterior) {
+
+    if (!remessaAtual) {
+        return;
+    }
+
+    if (valorAnterior) {
+        remessaAtual.dataFinalizacao = valorAnterior;
+    } else {
+        delete remessaAtual.dataFinalizacao;
+    }
+
+    document
+        .getElementById("dataFinalizacaoRemessa")
+        .textContent =
+            remessaAtual.dataFinalizacao || "Não finalizada";
+
+}
+
+
+function sincronizarDataFinalizacaoRemessa() {
+
+    if (!remessaAtual) {
+        return;
+    }
+
+    if (remessaConcluida()) {
+        remessaAtual.dataFinalizacao =
+            remessaAtual.dataFinalizacao || obterDataHoraAtualFormatada();
+    } else {
+        delete remessaAtual.dataFinalizacao;
+    }
+
+    document
+        .getElementById("dataFinalizacaoRemessa")
+        .textContent =
+            remessaAtual.dataFinalizacao || "Não finalizada";
+
+}
+
+
 /* =====================================================
    ATUALIZAR INFORMAÇÕES
 ===================================================== */
@@ -338,11 +432,23 @@ function atualizarInformacoes() {
             .getElementById("statusRemessa");
 
 
-    if (quantidadeConferida === total) {
+    const possuiFotoPendente =
+        remessaAtual.pecas.some(pecaComFotoPendente);
+
+
+    if (remessaConcluida()) {
 
         status.innerHTML = `
             <span class="status status-finalizada">
                 🟢 FINALIZADA
+            </span>
+        `;
+
+    } else if (quantidadeConferida === total && total > 0 && possuiFotoPendente) {
+
+        status.innerHTML = `
+            <span class="status status-andamento">
+                🟠 FOTO PENDENTE
             </span>
         `;
 
@@ -421,7 +527,7 @@ function renderPecas() {
 
 
             const status =
-                Number(peca.encontrada) >= Number(peca.quantidade)
+                pecaConcluida(peca)
 
                     ? `
                         <span class="badge badge-ok">
@@ -429,11 +535,19 @@ function renderPecas() {
                         </span>
                     `
 
-                    : `
-                        <span class="badge badge-pendente">
-                            ❌ Pendente
-                        </span>
-                    `;
+                    : pecaComFotoPendente(peca)
+
+                        ? `
+                            <span class="badge badge-pendente">
+                                ⚠️ Foto pendente
+                            </span>
+                        `
+
+                        : `
+                            <span class="badge badge-pendente">
+                                ❌ Pendente
+                            </span>
+                        `;
 
 
             lista.innerHTML += `
@@ -457,7 +571,7 @@ function renderPecas() {
                         <div class="fotos-count">
 
                             📷
-                            ${(peca.fotos || []).length}
+                            ${obterFotosPeca(peca).length}
                             foto(s)
 
                         </div>
@@ -546,7 +660,7 @@ function renderFotos() {
         return;
     }
 
-    const fotos = pecaAtual.fotos || [];
+    const fotos = obterFotosPeca(pecaAtual);
 
 
     if (fotos.length === 0) {
@@ -629,6 +743,8 @@ function adicionarFoto(event) {
     }
 
     const pecaEditada = pecaAtual;
+    const remessaEditada = remessaAtual;
+    const dataFinalizacaoAnterior = remessaEditada && remessaEditada.dataFinalizacao;
     lerFoto(arquivo).then(comprimirFoto).then(function (foto) {
         if (!pecaAtual || pecaAtual !== pecaEditada) return;
         if (!Array.isArray(pecaEditada.fotos)) {
@@ -638,9 +754,11 @@ function adicionarFoto(event) {
         const sessao = getAuthSession();
         const usuario = sessao && sessao.username ? String(sessao.username).trim() : "";
         pecaEditada.fotos.push({ imagem: foto, usuario: usuario });
+        sincronizarDataFinalizacaoRemessa();
         return salvarRemessas().then(function (salvou) {
             if (!salvou) {
                 if (pecaAtual === pecaEditada) pecaEditada.fotos.pop();
+                if (remessaAtual === remessaEditada) restaurarDataFinalizacao(dataFinalizacaoAnterior);
                 return;
             }
             renderFotos();
@@ -648,7 +766,12 @@ function adicionarFoto(event) {
         });
     }).catch(function () {
         if (pecaAtual === pecaEditada) {
-            pecaEditada.fotos.pop();
+            if (Array.isArray(pecaEditada.fotos)) {
+                pecaEditada.fotos.pop();
+            } else {
+                pecaEditada.fotos = [];
+            }
+            if (remessaAtual === remessaEditada) restaurarDataFinalizacao(dataFinalizacaoAnterior);
             renderFotos();
             renderPecas();
         }
@@ -676,10 +799,14 @@ function excluirFoto(indice) {
 
 
     const pecaEditada = pecaAtual;
+    const remessaEditada = remessaAtual;
+    const dataFinalizacaoAnterior = remessaEditada && remessaEditada.dataFinalizacao;
     const fotoRemovida = pecaEditada.fotos.splice(indice, 1)[0];
+    sincronizarDataFinalizacaoRemessa();
     salvarRemessas().then(function (salvou) {
         if (!salvou) {
             if (pecaAtual === pecaEditada) pecaEditada.fotos.splice(indice, 0, fotoRemovida);
+            if (remessaAtual === remessaEditada) restaurarDataFinalizacao(dataFinalizacaoAnterior);
             mensagemErro("Não foi possível excluir a foto. Tente novamente.", true);
         }
         renderFotos();

@@ -157,8 +157,24 @@ function restaurarRemessaAtiva() {
   else sessionStorage.removeItem(chaveRemessaAtiva);
 }
 
+function obterFotosPeca(peca) {
+  return Array.isArray(peca?.fotos) ? peca.fotos : [];
+}
+
+function quantidadeConferidaPeca(peca) {
+  return Number(peca?.encontrada) >= Number(peca?.quantidade);
+}
+
+function pecaConcluida(peca) {
+  return quantidadeConferidaPeca(peca) && obterFotosPeca(peca).length > 0;
+}
+
+function pecaComFotoPendente(peca) {
+  return quantidadeConferidaPeca(peca) && obterFotosPeca(peca).length === 0;
+}
+
 function remessaConcluida(item) {
-  return item.pecas.length > 0 && item.pecas.every(peca => Number(peca.encontrada) >= Number(peca.quantidade));
+  return item.pecas.length > 0 && item.pecas.every(peca => pecaConcluida(peca));
 }
 
 function abrirModalRemessaConcluida(item) {
@@ -192,6 +208,9 @@ function localizarCodigo() {
   pecaAtiva.encontrada = Number.isInteger(encontrada) ? Math.max(0, Math.min(quantidade, encontrada)) : 0;
   if (pecaAtiva.encontrada >= quantidade) {
     limparPecaAtiva();
+    if (pecaComFotoPendente(pecaAtiva)) {
+      return mensagem("Todas as quantidades deste código já foram debitadas, mas a evidência fotográfica está pendente. Consulte a tela de conferência para incluir a foto.", true);
+    }
     return mensagem("Todas as peças deste código já foram encontradas.", true);
   }
   fotosPendentes = [];
@@ -221,7 +240,7 @@ function adicionarFoto(evento) {
 }
 
 function atualizarFotos() {
-  const fotosRegistradas = (pecaAtiva?.fotos || []).length;
+  const fotosRegistradas = obterFotosPeca(pecaAtiva).length;
   document.getElementById("contadorFotos").textContent = fotosPendentes.length + "/5 nesta conferência; " + fotosRegistradas + " acumulada(s)";
   document.getElementById("fotosConferencia").innerHTML = fotosPendentes.map(foto => `<img class="miniatura-evidencia" src="${escaparFoto(foto)}" alt="Foto da peça ${escapar(pecaAtiva.codigo)}">`).join("");
   fotoConferencia.disabled = fotosPendentes.length >= 5;
@@ -269,22 +288,25 @@ async function enviarConferencia() {
     return;
   }
 
+  const remessaEstavaConcluida = remessaConcluida(remessaDoEnvio);
   const encontradaAnterior = pecaDoEnvio.encontrada;
-  const fotosAnteriores = [...(pecaDoEnvio.fotos || [])];
+  const fotosAnteriores = [...obterFotosPeca(pecaDoEnvio)];
   const dataCriacaoAnterior = remessaDoEnvio.dataCriacao;
   const dataFinalizacaoAnterior = remessaDoEnvio.dataFinalizacao;
+  const sessao = getAuthSession();
+  const usuario = sessao && sessao.username ? String(sessao.username).trim() : "";
   pecaDoEnvio.encontrada += quantidade;
   const total = remessaDoEnvio.pecas.reduce((soma, peca) => soma + peca.quantidade, 0);
-  const encontradas = remessaDoEnvio.pecas.reduce((soma, peca) => soma + peca.encontrada, 0);
-  if (total > 0 && encontradas === total && !remessaDoEnvio.dataFinalizacao) {
+  pecaDoEnvio.fotos = [...fotosAnteriores, ...fotosComprimidas.map(imagem => ({ imagem, usuario }))];
+  const remessaEstaConcluida = remessaConcluida(remessaDoEnvio);
+  if (remessaEstaConcluida && !remessaDoEnvio.dataFinalizacao) {
     remessaDoEnvio.dataFinalizacao = obterDataHoraAtualFormatada();
+  } else if (!remessaEstaConcluida) {
+    delete remessaDoEnvio.dataFinalizacao;
   }
   if (!remessaDoEnvio.dataCriacao) {
     remessaDoEnvio.dataCriacao = obterDataHoraAtualFormatada();
   }
-  const sessao = getAuthSession();
-  const usuario = sessao && sessao.username ? String(sessao.username).trim() : "";
-  pecaDoEnvio.fotos = [...fotosAnteriores, ...fotosComprimidas.map(imagem => ({ imagem, usuario }))];
   const resultadoSalvar = await salvar();
   if (!resultadoSalvar.sucesso) {
     if (remessa === remessaDoEnvio && pecaAtiva === pecaDoEnvio) {
@@ -299,7 +321,7 @@ async function enviarConferencia() {
     return;
   }
 
-  const finalizadaAutomaticamente = !dataFinalizacaoAnterior && !!remessaDoEnvio.dataFinalizacao;
+  const finalizadaAutomaticamente = !remessaEstavaConcluida && remessaEstaConcluida;
   envioEmAndamento = false;
 
   if (finalizadaAutomaticamente) {
@@ -317,7 +339,11 @@ async function enviarConferencia() {
   }
 
   atualizarTela();
-  mensagem("Conferência enviada: " + quantidade + " unidade(s) debitada(s) do código " + codigoPeca + ".");
+  if (total > 0 && remessaDoEnvio.pecas.every(peca => quantidadeConferidaPeca(peca)) && remessaDoEnvio.pecas.some(peca => pecaComFotoPendente(peca))) {
+    mensagem("Conferência enviada: " + quantidade + " unidade(s) debitada(s) do código " + codigoPeca + ". Todas as quantidades foram debitadas, mas ainda há peça(s) com foto pendente.");
+  } else {
+    mensagem("Conferência enviada: " + quantidade + " unidade(s) debitada(s) do código " + codigoPeca + ".");
+  }
   limparPecaAtiva();
   codigoManual.value = "";
   codigoManual.focus();
@@ -408,11 +434,13 @@ function atualizarTela() {
   document.getElementById("totalEncontradas").textContent = encontradas;
   document.getElementById("totalFaltantes").textContent = total - encontradas;
   document.getElementById("progresso").textContent = total ? Math.round(encontradas / total * 100) + "%" : "0%";
-  document.querySelector("tbody").innerHTML = remessa.pecas.filter(peca => peca.encontrada < peca.quantidade).map(peca => {
+  document.querySelector("tbody").innerHTML = remessa.pecas.filter(peca => !pecaConcluida(peca)).map(peca => {
     const faltante = peca.quantidade - peca.encontrada;
-    const classe = !peca.encontrada ? "pendente" : faltante ? "parcial" : "conferida";
-    return `<tr><td>${escapar(peca.codigo)}</td><td>${escapar(peca.descricao || "—")}</td><td>${peca.quantidade}</td><td>${formatarKg(peca.pesoKg)}</td><td>${peca.encontrada}</td><td>${faltante}</td><td class="${classe}">${faltante ? (peca.encontrada ? "Parcial" : "Pendente") : "Conferida"}</td><td>${(peca.fotos || []).length} foto(s)</td></tr>`;
-  }).join("") || "<tr><td colspan=\"8\">Todas as peças da remessa foram encontradas.</td></tr>";
+    const fotoPendente = pecaComFotoPendente(peca);
+    const classe = fotoPendente ? "parcial" : !peca.encontrada ? "pendente" : "parcial";
+    const status = fotoPendente ? "Foto pendente" : (faltante ? (peca.encontrada ? "Parcial" : "Pendente") : "Conferida");
+    return `<tr><td>${escapar(peca.codigo)}</td><td>${escapar(peca.descricao || "—")}</td><td>${peca.quantidade}</td><td>${formatarKg(peca.pesoKg)}</td><td>${peca.encontrada}</td><td>${faltante}</td><td class="${classe}">${status}</td><td>${obterFotosPeca(peca).length} foto(s)</td></tr>`;
+  }).join("") || "<tr><td colspan=\"8\">Todas as peças da remessa foram conferidas com foto.</td></tr>";
 }
 
 function lerFoto(arquivo) { return new Promise((resolver, rejeitar) => { const leitor = new FileReader(); leitor.onload = () => resolver(leitor.result); leitor.onerror = rejeitar; leitor.readAsDataURL(arquivo); }); }
