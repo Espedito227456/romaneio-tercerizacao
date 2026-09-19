@@ -280,6 +280,9 @@ function obterFotosPeca(peca) {
     }
 
     return peca.fotos.filter(function (foto) {
+        // Uma foto expirada (arquivo removido do R2 apos 90 dias) nao tem mais imagem,
+        // mas o registro continua contando como evidencia valida da conferencia.
+        if (foto && typeof foto === "object" && foto.expirada) return true;
         const imagem = typeof foto === "string" ? foto : foto && foto.imagem;
         return typeof imagem === "string" &&
             (imagem.startsWith("data:image/") || imagem.startsWith("/uploads/"));
@@ -684,14 +687,16 @@ function renderFotos() {
     fotos.forEach(
         function (foto, indice) {
 
+            const expirada = typeof foto === "object" && foto !== null && foto.expirada === true;
+            const corpoFoto = expirada
+                ? `<div class="foto-expirada">📷 Foto expirada em ${escapar(foto.dataRegistro || "data desconhecida")}<br>(arquivo removido do armazenamento apos 90 dias)</div>`
+                : `<img src="${escaparFoto(foto)}" alt="Foto da peça">`;
+
             lista.innerHTML += `
 
                 <div class="foto-card">
 
-                    <img
-                        src="${escaparFoto(foto)}"
-                        alt="Foto da peça"
-                    >
+                    ${corpoFoto}
 
                     <div class="foto-usuario">
                         Registrada por: ${escapar(obterUsuarioFoto(foto))}

@@ -5,7 +5,7 @@
   "description": "Servidor local para remessas e conferencias",
   "scripts": {
     "start": "node server.js",
-    "cleanup:expired": "node scripts/limpar-registros-expirados.js"
+    "cleanup:expired": "node scripts/expirar-fotos-r2.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1135.0",

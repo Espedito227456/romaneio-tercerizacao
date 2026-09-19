@@ -32,6 +32,13 @@ const r2 = new S3Client({
 
 const clientesTempoReal = new Set();
 
+// A coluna arquivo_key na tabela fotos_pecas e NOT NULL. Quando o script de expiracao
+// remove o arquivo do R2 apos 90 dias, essa string vazia marca "sem arquivo" mantendo
+// o registro (usuario, peca, data) no banco. Em JavaScript "" e falsy assim como null,
+// entao todas as checagens existentes (foto.arquivo_key ? ... : ...) já tratam esse
+// caso como "foto expirada" sem nenhuma logica adicional.
+const ARQUIVO_KEY_EXPIRADO = "";
+
 const sessoes = new Map();
 const TEMPO_SESSAO = 8 * 60 * 60 * 1000;
 
@@ -212,12 +219,25 @@ function referenciaFotoValida(foto) {
   return typeof foto === "string" && /^\/uploads\/[a-z0-9_-]+\.jpg$/i.test(foto);
 }
 
+function fotoExpiradaValida(foto) {
+  return typeof foto === "object" && foto !== null && foto.expirada === true
+    && typeof foto.id === "string" && /^[0-9a-f-]{36}$/i.test(foto.id);
+}
+
 function nomeBaseFoto(codigo) {
   const base = String(codigo || "").trim().replace(/[^a-z0-9_-]/gi, "-").replace(/-+/g, "-");
   return base || "foto";
 }
 
 function prepararFoto(foto) {
+  // Uma foto "expirada" nao possui mais imagem (o arquivo ja foi removido do R2 apos
+  // 90 dias), mas o registro (usuario, data) deve ser preservado. O cliente reenvia
+  // esse objeto sem alteracoes a cada atualizacao da remessa, entao ele e aceito aqui
+  // sem exigir uma imagem valida.
+  if (fotoExpiradaValida(foto)) {
+    const usuario = texto(foto.usuario, 100);
+    return { expirada: true, id: foto.id, ...(usuario ? { usuario } : {}) };
+  }
   const imagem = typeof foto === "string" ? foto : foto && foto.imagem;
   if (!fotoValida(imagem) && !referenciaFotoValida(imagem)) return null;
   const usuario = typeof foto === "object" && foto !== null ? texto(foto.usuario, 100) : "";
@@ -360,28 +380,29 @@ async function listarChavesFotoR2(remessaNumero, codigo) {
   return chaves.sort();
 }
 
-async function resolverArquivoKeyFotoExistente(referencia, fotosExistentesPorId) {
+async function resolverFotoExistente(referencia, fotosExistentesPorId) {
   const idFoto = String(referencia || "").match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
   if (!idFoto) {
     throw new Error("A referência da foto é inválida.");
   }
   // Ao atualizar uma remessa as pecas antigas sao excluidas (o que apaga em cascata
   // as fotos_pecas correspondentes) antes da reinsercao. Por isso, referencias a fotos
-  // ja existentes precisam ser resolvidas a partir do mapa carregado antes da exclusao;
+  // ja existentes precisam ser resolvidas a partir do mapa carregado antes da exclusao
+  // (que tambem preserva a data original de registro, usada no prazo de 90 dias);
   // a consulta ao banco abaixo serve apenas de fallback para outros cenarios.
   if (fotosExistentesPorId && fotosExistentesPorId.has(idFoto)) {
     return fotosExistentesPorId.get(idFoto);
   }
   const { data: fotoExistente, error: fotoConsultaError } = await supabase
     .from("fotos_pecas")
-    .select("arquivo_key")
+    .select("arquivo_key, usuario, created_at")
     .eq("id", idFoto)
     .maybeSingle();
   if (fotoConsultaError) throw new Error(`Não foi possível consultar a foto existente: ${fotoConsultaError.message}`);
   if (!fotoExistente?.arquivo_key) {
     throw new Error("A foto informada não está cadastrada no Cloudflare R2.");
   }
-  return fotoExistente.arquivo_key;
+  return { arquivoKey: fotoExistente.arquivo_key, usuario: fotoExistente.usuario, criadoEm: fotoExistente.created_at };
 }
 
 function imagemFoto(id) {
@@ -389,7 +410,7 @@ function imagemFoto(id) {
 }
 
 function fotoBancoValida(foto) {
-  return !!(foto && foto.id && foto.arquivo_key);
+  return !!(foto && foto.id);
 }
 
 async function reconciliarFotosPeca(remessaNumero, peca) {
@@ -414,7 +435,7 @@ async function reconciliarFotosPeca(remessaNumero, peca) {
       nome_original: path.basename(arquivo_key),
       usuario: null
     })))
-    .select("id, usuario, arquivo_key");
+    .select("id, usuario, arquivo_key, created_at");
   if (error) throw new Error(`Não foi possível reconciliar as fotos da peça ${peca.codigo}: ${error.message}`);
   peca.fotos_pecas = [...fotosAtuais, ...(inseridas || [])].filter(fotoBancoValida);
   return peca;
@@ -444,8 +465,10 @@ function mapearRemessaBanco(row) {
       encontrada: Number(peca.quantidade_encontrada || 0),
       pesoKg: Number(peca.peso_kg || 0),
       fotos: (peca.fotos_pecas || []).filter(fotoBancoValida).map(foto => ({
-        imagem: imagemFoto(foto.id),
-        usuario: foto.usuario || ""
+        ...(foto.arquivo_key ? { imagem: imagemFoto(foto.id) } : { imagem: null, expirada: true }),
+        id: foto.id,
+        usuario: foto.usuario || "",
+        dataRegistro: formatarDataAplicacao(foto.created_at)
       }))
     }))
   };
@@ -454,7 +477,7 @@ function mapearRemessaBanco(row) {
 async function carregarRemessasSupabase() {
   const { data, error } = await supabase
     .from("remessas")
-    .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key))")
+    .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key, created_at))")
     .order("created_at", { ascending: false });
   if (error) throw new Error(`Não foi possível consultar as remessas: ${error.message}`);
   await Promise.all((data || []).map(reconciliarFotosRemessa));
@@ -465,7 +488,7 @@ async function carregarRemessaSupabase(identificador) {
   const campo = /^[0-9a-f-]{36}$/i.test(identificador) ? "id" : "numero";
   const { data, error } = await supabase
     .from("remessas")
-    .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key))")
+    .select("id, numero, semana, data_criacao, peso_total_kg, versao, data_finalizacao, pecas(id, codigo, descricao, quantidade_solicitada, quantidade_encontrada, peso_kg, fotos_pecas(id, usuario, arquivo_key, created_at))")
     .eq(campo, identificador)
     .maybeSingle();
   if (error) throw new Error(`Não foi possível consultar a remessa: ${error.message}`);
@@ -495,16 +518,34 @@ async function inserirPecas(remessa, remessaId, fotosExistentesPorId = new Map()
     }
 
     for (const foto of peca.fotos) {
+      if (foto.expirada) {
+        // Foto ja teve o arquivo removido do R2 apos o prazo de 90 dias. Preserva o
+        // registro (usuario e data original) sem tentar restaurar nenhuma imagem.
+        const existente = fotosExistentesPorId.get(foto.id);
+        const { error: fotoExpiradaError } = await supabase.from("fotos_pecas").insert({
+          peca_id: pecaInserida.id,
+          arquivo_key: ARQUIVO_KEY_EXPIRADO,
+          nome_original: `${nomeBaseFoto(peca.codigo)}.jpg`,
+          usuario: foto.usuario || existente?.usuario || null,
+          ...(existente?.criadoEm ? { created_at: existente.criadoEm } : {})
+        });
+        if (fotoExpiradaError) throw new Error(`Não foi possível preservar o registro da foto expirada da peça ${peca.codigo}: ${fotoExpiradaError.message}`);
+        continue;
+      }
       const arquivoKey = await enviarFotoR2(remessa.numero, peca, foto);
       let arquivoKeyFinal = arquivoKey;
+      let criadoEmFinal;
       if (!arquivoKeyFinal && referenciaFotoValida(foto.imagem)) {
-        arquivoKeyFinal = await resolverArquivoKeyFotoExistente(foto.imagem, fotosExistentesPorId);
+        const existente = await resolverFotoExistente(foto.imagem, fotosExistentesPorId);
+        arquivoKeyFinal = existente.arquivoKey;
+        criadoEmFinal = existente.criadoEm;
       }
       const { error: fotoError } = await supabase.from("fotos_pecas").insert({
         peca_id: pecaInserida.id,
         arquivo_key: arquivoKeyFinal,
         nome_original: `${nomeBaseFoto(peca.codigo)}.jpg`,
-        usuario: foto.usuario || null
+        usuario: foto.usuario || null,
+        ...(criadoEmFinal ? { created_at: criadoEmFinal } : {})
       });
       if (fotoError) throw new Error(`Não foi possível salvar a foto da peça ${peca.codigo}: ${fotoError.message}`);
     }
@@ -524,10 +565,12 @@ async function salvarRemessaSupabase(remessa, id = null) {
   let fotosExistentesPorId = new Map();
   if (id) {
     // As pecas atuais serao excluidas (e suas fotos_pecas removidas em cascata) para
-    // dar lugar a reinsercao abaixo. Por isso o arquivo_key de cada foto precisa ser
-    // carregado agora, enquanto os registros ainda existem, para que as referencias
-    // /uploads/*.jpg reenviadas pelo cliente continuem sendo resolvidas corretamente
-    // (sem isso a foto vira "orfa" no R2 e perde o usuario que a registrou).
+    // dar lugar a reinsercao abaixo. Por isso o arquivo_key, o usuario e a data de
+    // registro de cada foto precisam ser carregados agora, enquanto os registros ainda
+    // existem, para que as referencias /uploads/*.jpg reenviadas pelo cliente sejam
+    // resolvidas corretamente e o prazo de 90 dias de cada foto continue contando a
+    // partir da data original (sem isso a foto vira "orfa" no R2, perde o usuario que
+    // a registrou, e o prazo de expiracao reiniciaria a cada atualizacao da remessa).
     const { data: pecasAtuais, error: pecasAtuaisError } = await supabase
       .from("pecas")
       .select("id")
@@ -537,10 +580,14 @@ async function salvarRemessaSupabase(remessa, id = null) {
     if (pecaIdsAtuais.length) {
       const { data: fotosAtuais, error: fotosAtuaisError } = await supabase
         .from("fotos_pecas")
-        .select("id, arquivo_key")
+        .select("id, arquivo_key, usuario, created_at")
         .in("peca_id", pecaIdsAtuais);
       if (fotosAtuaisError) throw new Error(`Não foi possível carregar as fotos existentes: ${fotosAtuaisError.message}`);
-      fotosExistentesPorId = new Map((fotosAtuais || []).map(foto => [foto.id, foto.arquivo_key]));
+      fotosExistentesPorId = new Map((fotosAtuais || []).map(foto => [foto.id, {
+        arquivoKey: foto.arquivo_key,
+        usuario: foto.usuario,
+        criadoEm: foto.created_at
+      }]));
     }
     const { data, error } = await supabase.from("remessas").update(dados).eq("id", id).eq("versao", remessa.versao - 1).select("id").maybeSingle();
     if (error) throw new Error(`Não foi possível atualizar a remessa: ${error.message}`);
@@ -812,9 +859,9 @@ const servidor = http.createServer(async (req, res) => {
     try {
       const { data, error } = await supabase.from("fotos_pecas").select("arquivo_key").eq("id", fotoCorrespondencia[1]).maybeSingle();
       if (error) throw new Error(`Não foi possível consultar a foto: ${error.message}`);
-      if (!data) {
+      if (!data || !data.arquivo_key) {
         res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-        return res.end("Foto nao encontrada.");
+        return res.end(data ? "Foto expirada: o arquivo foi removido do armazenamento apos 90 dias." : "Foto nao encontrada.");
       }
       const signedUrl = await getSignedUrl(r2, new GetObjectCommand({ Bucket: r2Bucket, Key: data.arquivo_key }), { expiresIn: 300 });
       res.writeHead(302, { Location: signedUrl, "Cache-Control": "private, max-age=240" });
