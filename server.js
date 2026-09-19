@@ -360,10 +360,17 @@ async function listarChavesFotoR2(remessaNumero, codigo) {
   return chaves.sort();
 }
 
-async function resolverArquivoKeyFotoExistente(referencia) {
+async function resolverArquivoKeyFotoExistente(referencia, fotosExistentesPorId) {
   const idFoto = String(referencia || "").match(/^\/uploads\/([0-9a-f-]+)\.jpg$/i)?.[1];
   if (!idFoto) {
     throw new Error("A referência da foto é inválida.");
+  }
+  // Ao atualizar uma remessa as pecas antigas sao excluidas (o que apaga em cascata
+  // as fotos_pecas correspondentes) antes da reinsercao. Por isso, referencias a fotos
+  // ja existentes precisam ser resolvidas a partir do mapa carregado antes da exclusao;
+  // a consulta ao banco abaixo serve apenas de fallback para outros cenarios.
+  if (fotosExistentesPorId && fotosExistentesPorId.has(idFoto)) {
+    return fotosExistentesPorId.get(idFoto);
   }
   const { data: fotoExistente, error: fotoConsultaError } = await supabase
     .from("fotos_pecas")
@@ -466,7 +473,7 @@ async function carregarRemessaSupabase(identificador) {
   return data;
 }
 
-async function inserirPecas(remessa, remessaId) {
+async function inserirPecas(remessa, remessaId, fotosExistentesPorId = new Map()) {
   for (const peca of remessa.pecas) {
     const { data: pecaInserida, error } = await supabase.from("pecas").insert({
       remessa_id: remessaId,
@@ -491,7 +498,7 @@ async function inserirPecas(remessa, remessaId) {
       const arquivoKey = await enviarFotoR2(remessa.numero, peca, foto);
       let arquivoKeyFinal = arquivoKey;
       if (!arquivoKeyFinal && referenciaFotoValida(foto.imagem)) {
-        arquivoKeyFinal = await resolverArquivoKeyFotoExistente(foto.imagem);
+        arquivoKeyFinal = await resolverArquivoKeyFotoExistente(foto.imagem, fotosExistentesPorId);
       }
       const { error: fotoError } = await supabase.from("fotos_pecas").insert({
         peca_id: pecaInserida.id,
@@ -514,7 +521,27 @@ async function salvarRemessaSupabase(remessa, id = null) {
     data_finalizacao: converterDataBanco(remessa.dataFinalizacao)
   };
   let remessaSalva;
+  let fotosExistentesPorId = new Map();
   if (id) {
+    // As pecas atuais serao excluidas (e suas fotos_pecas removidas em cascata) para
+    // dar lugar a reinsercao abaixo. Por isso o arquivo_key de cada foto precisa ser
+    // carregado agora, enquanto os registros ainda existem, para que as referencias
+    // /uploads/*.jpg reenviadas pelo cliente continuem sendo resolvidas corretamente
+    // (sem isso a foto vira "orfa" no R2 e perde o usuario que a registrou).
+    const { data: pecasAtuais, error: pecasAtuaisError } = await supabase
+      .from("pecas")
+      .select("id")
+      .eq("remessa_id", id);
+    if (pecasAtuaisError) throw new Error(`Não foi possível carregar as peças existentes: ${pecasAtuaisError.message}`);
+    const pecaIdsAtuais = (pecasAtuais || []).map(peca => peca.id);
+    if (pecaIdsAtuais.length) {
+      const { data: fotosAtuais, error: fotosAtuaisError } = await supabase
+        .from("fotos_pecas")
+        .select("id, arquivo_key")
+        .in("peca_id", pecaIdsAtuais);
+      if (fotosAtuaisError) throw new Error(`Não foi possível carregar as fotos existentes: ${fotosAtuaisError.message}`);
+      fotosExistentesPorId = new Map((fotosAtuais || []).map(foto => [foto.id, foto.arquivo_key]));
+    }
     const { data, error } = await supabase.from("remessas").update(dados).eq("id", id).eq("versao", remessa.versao - 1).select("id").maybeSingle();
     if (error) throw new Error(`Não foi possível atualizar a remessa: ${error.message}`);
     if (!data) return null;
@@ -529,7 +556,7 @@ async function salvarRemessaSupabase(remessa, id = null) {
     }
     remessaSalva = data;
   }
-  await inserirPecas(remessa, remessaSalva.id);
+  await inserirPecas(remessa, remessaSalva.id, fotosExistentesPorId);
   return remessaSalva.id;
 }
 
