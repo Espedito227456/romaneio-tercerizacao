@@ -10,6 +10,7 @@
 
 <body class="pagina-conferencia">
 
+<!-- Cabecalho onde auth.js adiciona usuario, logout e atalhos administrativos. -->
 <header class="cabecalho-operador">
     <div class="identidade-sistema">
         <img class="logo-agi" src="assets/agi-logo.svg?v=1" alt="AGI Brasil">
@@ -20,6 +21,7 @@
 
 <div class="container">
 
+    <!-- Volta para a tela operacional de selecao/conferencia de remessa. -->
     <a class="btn-gray botao-conferencia" href="remessa.html?nova=1" onclick="sessionStorage.removeItem('remessaAtiva')">Selecionar remessa</a>
 
     <!-- BUSCA DA REMESSA -->
@@ -54,6 +56,7 @@
 
         <div class="card">
 
+            <!-- Resumo geral da remessa selecionada e barra de progresso. -->
             <h2>
                 📦 Remessa
                 <span id="numeroRemessa"></span>
@@ -132,6 +135,7 @@
 
         <div class="card">
 
+            <!-- Campo de filtro e lista renderizada por js/conferencia-remessa.js. -->
             <h2>🔎 Peças</h2>
 
             <input
@@ -206,6 +210,7 @@
 </div>
 
 
+<!-- auth.js protege a tela; conferencia-remessa.js busca remessas, filtra pecas e gerencia fotos. -->
 <script defer src="js/auth.js"></script>
 <script defer src="js/conferencia-remessa.js?v=20260918-1"></script>
 

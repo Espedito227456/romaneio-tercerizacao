@@ -1,7 +1,14 @@
+/*
+  Estilos da consulta de remessas (conferencia-remessa.html).
+  Controla cards de progresso, lista de pecas, badges, modal de fotos e responsividade.
+*/
+
+ /* *: Padroniza o calculo de tamanho dos elementos para evitar estouro de layout. */
  * {
             box-sizing: border-box;
         }
 
+        /* body: Define base da pagina, altura, espacamento, fonte, cores e fundo. */
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -9,6 +16,7 @@
             color: #222;
         }
 
+        /* header: Organiza o cabecalho, logo e area superior da tela. */
         header {
             position: relative;
             background: white;
@@ -21,6 +29,7 @@
             gap: 18px;
         }
 
+        /* .logo-agi: Controla a identidade visual, logo e textos da marca. */
         .logo-agi {
             display: block;
             width: min(304px, 100%);
@@ -28,17 +37,20 @@
             object-fit: contain;
         }
 
+        /* header h1: Organiza o cabecalho, logo e area superior da tela. */
         header h1 {
             margin: 0;
             font-size: 22px;
         }
 
+        /* .identidade-sistema: Controla a identidade visual, logo e textos da marca. */
         .identidade-sistema {
             display: flex;
             justify-content: center;
             width: 100%;
         }
 
+        /* .logo-agi: Controla a identidade visual, logo e textos da marca. */
         .logo-agi {
             display: block;
             width: 304px;
@@ -47,11 +59,13 @@
             object-fit: contain;
         }
 
+        /* .marca-operador: Controla a identidade visual, logo e textos da marca. */
         .marca-operador {
             font-size: 18px;
             font-weight: 700;
         }
 
+        /* .usuario-operador: Estiliza o menu do usuario logado, logout e links de conta. */
         .usuario-operador {
             position: absolute;
             top: 12px;
@@ -62,18 +76,21 @@
             font-size: 14px;
         }
 
+        /* .usuario-operador a: Estiliza o menu do usuario logado, logout e links de conta. */
         .usuario-operador a {
             color: #056331;
             font-weight: 700;
             text-decoration: none;
         }
 
+        /* .container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .container {
             width: 95%;
             max-width: 900px;
             margin: 20px auto;
         }
 
+        /* .card: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .card {
             background: white;
             padding: 20px;
@@ -83,12 +100,14 @@
             box-shadow: none;
         }
 
+        /* .remessas-recentes: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .remessas-recentes {
             margin-top: 15px;
             padding-top: 12px;
             border-top: 1px dashed #cbd5e1;
         }
 
+        /* .titulo-recentes: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .titulo-recentes {
             display: block;
             margin-bottom: 8px;
@@ -97,12 +116,14 @@
             color: #64748b;
         }
 
+        /* .lista-recentes: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .lista-recentes {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
 
+        /* .btn-remessa-recente: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-remessa-recente {
             display: inline-flex;
             align-items: center;
@@ -118,6 +139,7 @@
             transition: all 0.2s ease;
         }
 
+        /* .btn-remessa-recente:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-remessa-recente:hover {
             background: #08783d;
             border-color: #08783d;
@@ -126,10 +148,12 @@
             box-shadow: 0 2px 5px rgba(8, 120, 61, 0.25);
         }
 
+        /* h2: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
         h2 {
             margin-top: 0;
         }
 
+        /* input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         input {
             width: 100%;
             min-height: 48px;
@@ -140,6 +164,7 @@
             margin-bottom: 10px;
         }
 
+        /* button: Define aparencia, tamanho e estados dos botoes de acao. */
         button {
             border: none;
             border-radius: 8px;
@@ -151,14 +176,17 @@
             color: white;
         }
 
+        /* button:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         button:hover {
             opacity: 0.9;
         }
 
+        /* .btn-gray: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-gray {
             background: #08783d;
         }
 
+        /* .pagina-conferencia .botao-conferencia: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-conferencia .botao-conferencia {
             display: inline-block;
             margin-bottom: 18px;
@@ -173,25 +201,30 @@
             transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
 
+        /* .pagina-conferencia .botao-conferencia:hover: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-conferencia .botao-conferencia:hover {
             background: #056331;
             border-color: #056331;
             color: #fff;
         }
 
+        /* .pagina-conferencia .botao-conferencia:focus-visible: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-conferencia .botao-conferencia:focus-visible {
             outline: 3px solid rgba(37, 99, 235, 0.3);
             outline-offset: 2px;
         }
 
+        /* .btn-green: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-green {
             background: #08783d;
         }
 
+        /* .btn-red: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-red {
             background: #dc2626;
         }
 
+        /* .pagina-conferencia button, .pagina-conferencia .btn-gray, .pagina-conferencia .btn-green, .pagina-conferencia .btn-red, .pagina-conferen...: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-conferencia button,
         .pagina-conferencia .btn-gray,
         .pagina-conferencia .btn-green,
@@ -206,6 +239,7 @@
             font-weight: bold;
         }
 
+        /* .pagina-conferencia button:hover, .pagina-conferencia .btn-gray:hover, .pagina-conferencia .btn-green:hover, .pagina-conferencia .btn-red...: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-conferencia button:hover,
         .pagina-conferencia .btn-gray:hover,
         .pagina-conferencia .btn-green:hover,
@@ -215,18 +249,21 @@
             color: #fff;
         }
 
+        /* .erro: Define cores e destaque para mensagens, status e indicadores do processo. */
         .erro {
             color: #dc2626;
             font-weight: bold;
             margin-top: 10px;
         }
 
+        /* .hidden: Esconde o elemento quando ele nao deve aparecer na tela. */
         .hidden {
             display: none;
         }
 
-        /* INFORMAÇÕES */
+        /* INFORMACOES */
 
+        /* .info-grid: Organiza informacoes resumidas em grade visual. */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -234,6 +271,7 @@
             margin-top: 20px;
         }
 
+        /* .info-box: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .info-box {
             background: #f3f4f6;
             padding: 15px;
@@ -241,12 +279,14 @@
             text-align: center;
         }
 
+        /* .info-box span: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .info-box span {
             display: block;
             font-size: 13px;
             color: #666;
         }
 
+        /* .info-box strong: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .info-box strong {
             display: block;
             font-size: 22px;
@@ -255,6 +295,7 @@
 
         /* STATUS */
 
+        /* .status: Define cores e destaque para mensagens, status e indicadores do processo. */
         .status {
             display: inline-block;
             padding: 8px 14px;
@@ -263,11 +304,13 @@
             margin-top: 12px;
         }
 
+        /* .status-andamento: Define cores e destaque para mensagens, status e indicadores do processo. */
         .status-andamento {
             background: #fef3c7;
             color: #92400e;
         }
 
+        /* .status-finalizada: Define cores e destaque para mensagens, status e indicadores do processo. */
         .status-finalizada {
             background: #dcfce7;
             color: #166534;
@@ -275,10 +318,12 @@
 
         /* PROGRESSO */
 
+        /* .progress-container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .progress-container {
             margin-top: 20px;
         }
 
+        /* .progress: Monta a barra ou indicador visual de progresso da remessa. */
         .progress {
             height: 20px;
             background: #e5e7eb;
@@ -286,14 +331,16 @@
             overflow: hidden;
         }
 
+        /* .progress-bar: Monta a barra ou indicador visual de progresso da remessa. */
         .progress-bar {
             height: 100%;
             width: 0%;
             background: #22c55e;
         }
 
-        /* PEÇAS */
+        /* PECAS */
 
+        /* .peca: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .peca {
             border: 1px solid #ddd;
             border-radius: 10px;
@@ -305,20 +352,24 @@
             gap: 15px;
         }
 
+        /* .peca-info: Organiza informacoes resumidas em grade visual. */
         .peca-info {
             flex: 1;
         }
 
+        /* .codigo: Define layout, espacamento e aparencia visual deste seletor. */
         .codigo {
             font-weight: bold;
             font-size: 17px;
         }
 
+        /* .nome: Define layout, espacamento e aparencia visual deste seletor. */
         .nome {
             color: #666;
             margin-top: 5px;
         }
 
+        /* .badge: Define cores e destaque para mensagens, status e indicadores do processo. */
         .badge {
             display: inline-block;
             margin-top: 8px;
@@ -328,16 +379,19 @@
             font-weight: bold;
         }
 
+        /* .badge-ok: Define cores e destaque para mensagens, status e indicadores do processo. */
         .badge-ok {
             background: #dcfce7;
             color: #166534;
         }
 
+        /* .badge-pendente: Define cores e destaque para mensagens, status e indicadores do processo. */
         .badge-pendente {
             background: #fee2e2;
             color: #991b1b;
         }
 
+        /* .fotos-count: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .fotos-count {
             margin-top: 6px;
             font-size: 13px;
@@ -346,6 +400,7 @@
 
         /* MODAL */
 
+        /* .modal: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .modal {
             position: fixed;
             top: 0;
@@ -362,10 +417,12 @@
             z-index: 1000;
         }
 
+        /* .modal.hidden: Esconde o elemento quando ele nao deve aparecer na tela. */
         .modal.hidden {
             display: none;
         }
 
+        /* .modal-box: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .modal-box {
             background: white;
             width: 100%;
@@ -376,6 +433,7 @@
             padding: 20px;
         }
 
+        /* .modal-top: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .modal-top {
             display: flex;
             justify-content: space-between;
@@ -383,16 +441,19 @@
             margin-bottom: 15px;
         }
 
+        /* .modal-top h2: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .modal-top h2 {
             margin: 0;
         }
 
+        /* .foto-grid: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .foto-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
         }
 
+        /* .foto-card: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .foto-card {
             border: 1px solid #ddd;
             border-radius: 10px;
@@ -400,6 +461,7 @@
             background: #f9fafb;
         }
 
+        /* .foto-card img: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .foto-card img {
             width: 100%;
             height: 220px;
@@ -408,6 +470,7 @@
             display: block;
         }
 
+        /* .foto-expirada: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .foto-expirada {
             width: 100%;
             height: 220px;
@@ -424,6 +487,7 @@
             box-sizing: border-box;
         }
 
+        /* .foto-usuario: Estiliza o menu do usuario logado, logout e links de conta. */
         .foto-usuario {
             margin-top: 8px;
             color: #4b5563;
@@ -431,17 +495,20 @@
             font-weight: 600;
         }
 
+        /* .foto-card button: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .foto-card button {
             width: 100%;
             margin-top: 10px;
         }
 
+        /* .sem-foto: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .sem-foto {
             text-align: center;
             padding: 30px;
             color: #777;
         }
 
+        /* .btn-add-foto: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-add-foto {
             width: 100%;
             margin-top: 15px;
@@ -449,19 +516,23 @@
 
         /* CELULAR */
 
+        /* @media (max-width: 650px): Ajusta as regras internas para telas menores e melhora a responsividade. */
         @media (max-width: 650px) {
 
+            /* header: Organiza o cabecalho, logo e area superior da tela. */
             header {
                 display: flex;
                 flex-direction: column;
                 padding: 10px 16px 12px;
             }
 
+            /* .marca-operador: Controla a identidade visual, logo e textos da marca. */
             .marca-operador {
                 margin-bottom: 7px;
                 font-size: 16px;
             }
 
+            /* .usuario-operador: Estiliza o menu do usuario logado, logout e links de conta. */
             .usuario-operador {
                 position: static;
                 order: -1;
@@ -471,29 +542,35 @@
                 font-size: 13px;
             }
 
+            /* .container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
             .container {
                 width: calc(100% - 14px);
                 margin: 18px auto 34px;
             }
 
+            /* .pagina-conferencia .botao-conferencia: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-conferencia .botao-conferencia {
                 width: 100%;
                 text-align: center;
             }
 
+            /* .info-grid: Organiza informacoes resumidas em grade visual. */
             .info-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
+            /* .peca: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
             .peca {
                 flex-direction: column;
                 align-items: stretch;
             }
 
+            /* .peca button: Define aparencia, tamanho e estados dos botoes de acao. */
             .peca button {
                 width: 100%;
             }
 
+            /* .foto-grid: Controla exibicao de fotos, evidencias, camera e miniaturas. */
             .foto-grid {
                 grid-template-columns: 1fr;
             }

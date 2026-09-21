@@ -7,6 +7,7 @@
   <title>Importar Romaneio</title>
 </head>
 <body class="pagina-index">
+  <!-- Cabecalho comum das telas operacionais; auth.js injeta usuario/logoff aqui. -->
   <header class="cabecalho-operador">
     <div class="identidade-sistema">
       <img class="logo-agi" src="assets/agi-logo.svg?v=1" alt="AGI Brasil">
@@ -17,6 +18,7 @@
     </div>
   </header>
   <div class="container">
+    <!-- Area principal para selecionar e importar o Excel do romaneio. -->
     <h1>Importar Romaneio</h1>
     <p>Selecione o arquivo Excel da remessa para iniciar.</p>
     <!--<p class="ajuda">Formato padrão: dados da remessa na linha 2 e tabela com CÓDIGO, DESCRIÇÃO, QTD e TOTAL EM KG.</p>-->
@@ -25,11 +27,13 @@
       <div id="arquivoSelecionado"></div><button type="submit">Importar Romaneio</button>
     </form>
 
+    <!-- Atalhos para iniciar conferencia sem nova importacao ou consultar remessas. -->
     <div class="links-navegacao">
       <a class="botao-index" href="remessa.html?nova=1">Selecionar Remessa</a>
       <a class="botao-index botao-consulta" href="conferencia-remessa.html">Consultar remessas em conferência</a>
     </div>
   </div>
+  <!-- xlsx.full.min.js le a planilha; script.js transforma o Excel em remessa e envia a API. -->
   <script defer src="js/auth.js"></script>
   <script defer src="js/xlsx.full.min.js"></script>
   <script defer src="js/script.js?v=20260906-4"></script>

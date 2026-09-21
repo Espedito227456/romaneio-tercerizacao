@@ -1,19 +1,28 @@
+/*
+  Estilos da tela de login.
+  Monta o cartao central, identidade visual, campos de senha e mensagens do formulario.
+*/
+
+/* *: Padroniza o calculo de tamanho dos elementos para evitar estouro de layout. */
 * {
   box-sizing: border-box;
 }
 
+/* html, body: Define base da pagina, altura, espacamento, fonte, cores e fundo. */
 html, body {
   margin: 0;
   min-height: 100%;
   height: 100%;
 }
 
+/* body: Define base da pagina, altura, espacamento, fonte, cores e fundo. */
 body {
   font-family: Arial, Helvetica, sans-serif;
   background: #dfe3e3;
   color: #1d1d1d;
 }
 
+/* .login-page: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -22,16 +31,19 @@ body {
   padding: 28px 16px;
 }
 
+/* .login-shell: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
 .login-shell {
   width: 100%;
   max-width: 420px;
 }
 
+/* .login-card: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
 .login-card {
   width: 100%;
   background: transparent;
 }
 
+/* .brand: Controla a identidade visual, logo e textos da marca. */
 .brand {
   display: flex;
   align-items: flex-end;
@@ -41,6 +53,7 @@ body {
   min-height: 60px;
 }
 
+/* .logo-agi: Controla a identidade visual, logo e textos da marca. */
 .logo-agi {
   display: block;
   width: min(290px, 100%);
@@ -48,6 +61,7 @@ body {
   object-fit: contain;
 }
 
+/* .brand-tag: Controla a identidade visual, logo e textos da marca. */
 .brand-tag {
   font-size: 13px;
   font-weight: 500;
@@ -56,18 +70,21 @@ body {
   white-space: nowrap;
 }
 
+/* .login-form: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .login-form {
   display: flex;
   flex-direction: column;
   gap: 22px;
 }
 
+/* .field: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .field {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+/* .field label: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .field label {
   margin: 0;
   font-size: 16px;
@@ -76,6 +93,7 @@ body {
   color: #1f2325;
 }
 
+/* .field input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .field input {
   width: 100%;
   height: 42px;
@@ -89,19 +107,23 @@ body {
   box-shadow: inset 0 0 0 1px rgba(67, 114, 146, 0.08);
 }
 
+/* .field input:focus: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .field input:focus {
   border-color: #75b2da;
   box-shadow: 0 0 0 3px rgba(91, 163, 214, 0.18);
 }
 
+/* .password-wrap: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .password-wrap {
   position: relative;
 }
 
+/* .password-wrap input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .password-wrap input {
   padding-right: 42px;
 }
 
+/* .toggle-password: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password {
   position: absolute;
   right: 8px;
@@ -121,16 +143,19 @@ body {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
+/* .toggle-password svg: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password svg {
   width: 18px;
   height: 18px;
   display: block;
 }
 
+/* .toggle-password:hover: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password:hover {
   background: rgba(116, 123, 129, 0.24);
 }
 
+/* .toggle-password .eye-shape, .toggle-password .eye-pupil, .toggle-password .eye-slash: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password .eye-shape,
 .toggle-password .eye-pupil,
 .toggle-password .eye-slash {
@@ -138,27 +163,33 @@ body {
   transition: opacity 0.18s ease;
 }
 
+/* .toggle-password .eye-slash: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password .eye-slash {
   opacity: 1;
 }
 
+/* .toggle-password.is-visible: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password.is-visible {
   background: rgba(34, 119, 77, 0.18);
   color: #12673d;
 }
 
+/* .toggle-password.is-visible .eye-slash: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password.is-visible .eye-slash {
   opacity: 0;
 }
 
+/* .toggle-password.is-visible .eye-pupil: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password.is-visible .eye-pupil {
   opacity: 1;
 }
 
+/* .toggle-password:not(.is-visible) .eye-pupil: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .toggle-password:not(.is-visible) .eye-pupil {
   opacity: 0.95;
 }
 
+/* .form-message: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .form-message {
   min-height: 18px;
   margin: -10px 0 0;
@@ -168,14 +199,17 @@ body {
   visibility: hidden;
 }
 
+/* .form-message.visible: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .form-message.visible {
   visibility: visible;
 }
 
+/* .form-message.success: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
 .form-message.success {
   color: #0d6b3b;
 }
 
+/* .submit-btn: Define aparencia, tamanho e estados dos botoes de acao. */
 .submit-btn {
   width: 100%;
   min-height: 52px;
@@ -190,15 +224,18 @@ body {
   box-shadow: 0 2px 0 rgba(17, 86, 53, 0.2);
 }
 
+/* .submit-btn:hover: Define aparencia, tamanho e estados dos botoes de acao. */
 .submit-btn:hover {
   background: linear-gradient(180deg, #0d8c4d 0%, #0c7343 100%);
 }
 
+/* .register-link-wrap: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
 .register-link-wrap {
   margin-top: 14px;
   text-align: center;
 }
 
+/* .register-link: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
 .register-link {
   color: #0a7d49;
   font-size: 14px;
@@ -207,22 +244,27 @@ body {
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
+/* .register-link:hover: Altera o visual quando o usuario passa o mouse sobre o elemento. */
 .register-link:hover {
   color: #0d8c4d;
   text-decoration: none;
 }
 
+/* @media (max-width: 420px): Ajusta as regras internas para telas menores e melhora a responsividade. */
 @media (max-width: 420px) {
+  /* .brand: Controla a identidade visual, logo e textos da marca. */
   .brand {
     flex-direction: column;
     align-items: center;
     gap: 4px;
   }
 
+  /* .brand-tag: Controla a identidade visual, logo e textos da marca. */
   .brand-tag {
     transform: none;
   }
 
+  /* .field label: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
   .field label {
     font-size: 15px;
   }

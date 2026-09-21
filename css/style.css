@@ -1,7 +1,14 @@
+/*
+  Estilos da tela de importacao (index.html).
+  Organiza cabecalho, card central, formulario de Excel e botoes de navegacao.
+*/
+
+/* *, *::before, *::after: Padroniza o calculo de tamanho dos elementos para evitar estouro de layout. */
 *, *::before, *::after {
             box-sizing: border-box;
         }
 
+/* body: Define base da pagina, altura, espacamento, fonte, cores e fundo. */
 body {
            font-family: Arial, sans-serif;
      background: #ffffff;
@@ -9,6 +16,7 @@ body {
      padding: 0;
         }
 
+ /* .cabecalho-operador: Organiza o cabecalho, logo e area superior da tela. */
  .cabecalho-operador {
      position: relative;
      display: flex;
@@ -21,6 +29,7 @@ body {
      color: #fff;
  }
 
+ /* .identidade-sistema: Controla a identidade visual, logo e textos da marca. */
  .identidade-sistema {
      position: absolute;
      left: 50%;
@@ -30,6 +39,7 @@ body {
      gap: 10px;
  }
 
+ /* .logo-agi: Controla a identidade visual, logo e textos da marca. */
  .logo-agi {
      display: block;
      width: min(304px, 100%);
@@ -38,6 +48,7 @@ body {
      object-fit: contain;
  }
 
+ /* .identidade-sistema > div: Controla a identidade visual, logo e textos da marca. */
  .identidade-sistema > div {
      display: flex;
      flex-direction: column;
@@ -45,11 +56,13 @@ body {
      gap: 2px;
  }
 
+ /* .marca-operador: Controla a identidade visual, logo e textos da marca. */
  .marca-operador {
      font-size: 17px;
      font-weight: 700;
  }
 
+ /* .descricao-sistema: Define layout, espacamento e aparencia visual deste seletor. */
  .descricao-sistema {
      display: block;
      color: #b8c2c7;
@@ -57,6 +70,7 @@ body {
      text-align: center;
  }
 
+ /* .modulo-atual: Define layout, espacamento e aparencia visual deste seletor. */
  .modulo-atual {
      margin-left: auto;
      padding-left: 18px;
@@ -65,6 +79,7 @@ body {
      font-size: 14px;
  }
 
+ /* .usuario-operador: Estiliza o menu do usuario logado, logout e links de conta. */
  .usuario-operador {
      position: absolute;
      top: 12px;
@@ -76,12 +91,14 @@ body {
      color: #222;
  }
 
+ /* .usuario-operador a: Estiliza o menu do usuario logado, logout e links de conta. */
  .usuario-operador a {
      color: #056331;
      font-weight: 700;
      text-decoration: none;
  }
 
+        /* .container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .container {
             width: calc(100% - 48px);
             max-width: 760px;
@@ -93,6 +110,7 @@ body {
             box-shadow: none;
         }
 
+        /* .botao-index: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-index {
             flex: 1 1 0;
             min-width: 0;
@@ -111,12 +129,14 @@ body {
             white-space: normal;
         }
 
+        /* .links-navegacao: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
         .links-navegacao {
             display: flex;
             align-items: stretch;
             gap: 16px;
         }
 
+        /* .pagina-index button, .botao-index: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-index button,
         .botao-index {
             min-height: 44px;
@@ -124,32 +144,38 @@ body {
             font-weight: bold;
         }
 
+        /* .pagina-index button:hover, .botao-index:hover: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-index button:hover,
         .botao-index:hover {
             background: #056331;
             color: #fff;
         }
 
+        /* h1: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
         h1 {
             text-align: center;
             margin-bottom: 10px;
         }
 
+        /* p: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
         p {
             text-align: center;
             color: #666;
         }
 
+        /* .campo: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .campo {
             margin-top: 25px;
         }
 
+        /* label: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
         }
 
+        /* input[type="file"]: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         input[type="file"] {
             width: 100%;
             padding: 12px;
@@ -158,6 +184,7 @@ body {
             box-sizing: border-box;
         }
 
+        /* button: Define aparencia, tamanho e estados dos botoes de acao. */
         button {
             width: 100%;
             margin-top: 20px;
@@ -171,21 +198,26 @@ body {
             cursor: pointer;
         }
 
+        /* button:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         button:hover {
             background: #056331;
         }
 
+        /* #arquivoSelecionado: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         #arquivoSelecionado {
             margin-top: 15px;
             color: #333;
             text-align: center;
         }
 
+        /* .ajuda: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
         .ajuda {
             font-size: 13px;
         }
 
+        /* @media (max-width: 600px): Ajusta as regras internas para telas menores e melhora a responsividade. */
         @media (max-width: 600px) {
+            /* .cabecalho-operador: Organiza o cabecalho, logo e area superior da tela. */
             .cabecalho-operador {
                 display: flex;
                 flex-direction: column;
@@ -193,12 +225,14 @@ body {
                 padding: 12px 16px 14px;
             }
 
+            /* .identidade-sistema: Controla a identidade visual, logo e textos da marca. */
             .identidade-sistema {
                 position: static;
                 justify-content: center;
                 transform: none;
             }
 
+            /* .modulo-atual: Define layout, espacamento e aparencia visual deste seletor. */
             .modulo-atual {
                 margin-top: 10px;
                 padding: 8px 0 0;
@@ -207,6 +241,7 @@ body {
                 font-size: 13px;
             }
 
+            /* .usuario-operador: Estiliza o menu do usuario logado, logout e links de conta. */
             .usuario-operador {
                 position: static;
                 order: -1;
@@ -216,35 +251,42 @@ body {
                 font-size: 13px;
             }
 
+            /* body: Define base da pagina, altura, espacamento, fonte, cores e fundo. */
             body {
                 padding: 0;
             }
 
+            /* .container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
             .container {
                 width: calc(100% - 28px);
                 margin: 24px auto 34px;
                 padding: 22px 18px;
             }
 
+            /* .logo-agi: Controla a identidade visual, logo e textos da marca. */
             .logo-agi {
                 width: min(304px, 100%);
                 height: auto;
                 max-height: 54px;
             }
 
+            /* h1: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
             h1 {
                 font-size: 28px;
             }
 
+            /* button: Define aparencia, tamanho e estados dos botoes de acao. */
             button {
                 min-height: 48px;
             }
 
+            /* .links-navegacao: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
             .links-navegacao {
                 flex-direction: column;
                 gap: 0;
             }
 
+            /* .links-navegacao .botao-index: Define aparencia, tamanho e estados dos botoes de acao. */
             .links-navegacao .botao-index {
                 width: 100%;
                 margin-top: 20px;

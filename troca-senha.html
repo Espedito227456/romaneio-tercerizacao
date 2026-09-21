@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="css/cadastro.css" />
   </head>
   <body class="cadastro-page">
+    <!-- Tela interna para o usuario logado alterar a propria senha. -->
     <main class="cadastro-shell">
       <div class="cadastro-card" role="main">
+        <!-- Identidade visual reaproveitada do cadastro/login. -->
         <header class="brand" aria-label="AGI Brasil">
           <img class="logo-agi" src="assets/agi-logo.svg" alt="AGI Brasil" />
           <span class="brand-tag">From field to future</span>
         </header>
 
+        <!-- Formulario processado por js/troca-senha.js e enviado para /api/trocar-senha. -->
         <form id="trocaSenhaForm" class="cadastro-form" novalidate>
           <div class="field">
             <label for="senha">NOVA SENHA:</label>
@@ -47,12 +50,14 @@
           <button type="submit" class="submit-btn">ALTERAR SENHA</button>
         </form>
 
+        <!-- Volta para o fluxo operacional depois da alteracao. -->
         <div class="footer-link">
           <a href="remessa.html">Voltar</a>
         </div>
       </div>
     </main>
 
+    <!-- auth.js exige sessao; troca-senha.js envia a nova senha. -->
     <script defer src="js/auth.js"></script>
     <script defer src="js/troca-senha.js"></script>
   </body>

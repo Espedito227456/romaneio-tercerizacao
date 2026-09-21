@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="css/cadastro.css" />
   </head>
   <body class="cadastro-page">
+    <!-- Tela publica para criacao de usuario comum. -->
     <main class="cadastro-shell">
       <div class="cadastro-card" role="main">
+        <!-- Identidade visual padronizada das telas de acesso. -->
         <header class="brand" aria-label="AGI Brasil">
           <img class="logo-agi" src="assets/agi-logo.svg" alt="AGI Brasil" />
           <span class="brand-tag">From field to future</span>
         </header>
 
+        <!-- Formulario validado por js/cadastro.js antes de chamar /api/cadastro. -->
         <form id="cadastroForm" class="cadastro-form" novalidate>
           <div class="field">
             <label for="usuario">NOVO USUÁRIO:</label>
@@ -52,12 +55,14 @@
           <button type="submit" class="submit-btn">CRIAR USUÁRIO</button>
         </form>
 
+        <!-- Retorno simples para quem ja possui cadastro. -->
         <div class="footer-link">
           <a href="login.html">Voltar para login</a>
         </div>
       </div>
     </main>
 
+    <!-- auth.js controla redirecionamentos; cadastro.js cria o usuario. -->
     <script defer src="js/auth.js"></script>
     <script defer src="js/cadastro.js"></script>
   </body>

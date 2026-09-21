@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="css/remessa.css"><title>Conferência da Remessa</title>
 </head>
 <body class="pagina-remessa">
+  <!-- Cabecalho operacional compartilhado com informacao do usuario logado. -->
   <header class="cabecalho-operador">
     <div class="identidade-sistema">
       <img class="logo-agi" src="assets/agi-logo.svg?v=1" alt="AGI Brasil">
@@ -13,6 +14,7 @@
   </header>
   <div class="container">
     <h1>Conferência de Remessa</h1><p class="subtitulo">Confira as peças da remessa abaixo.</p>
+    <!-- Primeiro passo: localizar uma remessa importada antes de conferir pecas. -->
     <div id="selecaoRemessa" class="selecao-remessa">
       <h2>Localizar remessa</h2>
       <p class="subtitulo">Digite o número da remessa para iniciar a conferência.</p>
@@ -31,6 +33,7 @@
       <p id="mensagemBusca" class="mensagem" aria-live="polite"></p>
     </div>
 
+    <!-- Aviso quando a remessa buscada ja esta completa e deve ser apenas consultada. -->
     <div id="modalRemessaConcluida" class="modal-remessa" hidden>
       <div class="modal-remessa-conteudo" role="dialog" aria-modal="true" aria-labelledby="tituloRemessaConcluida">
         <button id="fecharModalRemessa" class="fechar-modal" type="button" aria-label="Fechar">&times;</button>
@@ -40,11 +43,14 @@
       </div>
     </div>
 
+    <!-- Conteudo mostrado depois que uma remessa valida e aberta. -->
     <div id="conteudoRemessa" hidden>
+    <!-- Cards de resumo atualizados por js/remessa.js. -->
     <div class="informacoes">
       <div class="card"><span>Remessa</span><strong id="numeroRemessa">—</strong></div><div class="card"><span>Semana</span><strong id="semanaRemessa">—</strong></div><div class="card"><span>Total de peças</span><strong id="totalPecas">0</strong></div><div class="card"><span>Kg conferidos</span><strong id="pesoTotal">0 kg</strong></div><div class="card"><span>Encontradas</span><strong id="totalEncontradas">0</strong></div><div class="card"><span>Faltantes</span><strong id="totalFaltantes">0</strong></div><div class="card"><span>Progresso</span><strong id="progresso">0%</strong></div>
     </div>
     <p id="avisoSemRemessa" class="aviso-sem-remessa" hidden>Não há uma remessa carregada neste aparelho. <a href="index.html">Importar remessa</a></p>
+    <!-- Formulario de leitura do codigo, quantidade encontrada e fotos da evidencia. -->
     <div class="conferencia">
       <h2>Conferir peça</h2><p class="subtitulo">Digite o código da peça. Depois informe a quantidade encontrada, adicione de 1 a 5 fotos novas e envie a conferência.</p>
       <div class="leitura-manual"><label for="codigoManual">Código da peça</label><div class="campo-com-acao"><input id="codigoManual" type="text" autocomplete="off" placeholder="Digite ou use o leitor" disabled><button id="buscarCodigo" type="button" disabled>Buscar código</button></div></div>
@@ -56,12 +62,15 @@
       </div>
       <p id="mensagemLeitura" class="mensagem" aria-live="polite"></p>
     </div>
+    <!-- Lista somente das pecas ainda nao concluidas com foto. -->
     <div class="tabela-container"><h2>Peças da remessa</h2><table><thead><tr><th>Código</th><th>Descrição</th><th>Quantidade</th><th>Total em kg</th><th>Encontrado</th><th>Faltante</th><th>Status</th><th>Evidências acumuladas</th></tr></thead><tbody></tbody></table></div>
+      <!-- Navegacao final para trocar de remessa ou consultar fotos. -->
       <div class="acoes-remessa">
         <a id="selecionarNovaRemessa" class="botao-voltar botao-selecionar-remessa" href="remessa.html?nova=1" onclick="sessionStorage.removeItem('remessaAtiva')">Selecionar Remessa</a>
         <a class="botao-voltar botao-selecionar-remessa" href="conferencia-remessa.html">Consultar fotos</a>
       </div>
   </div>
+  <!-- auth.js protege a pagina; remessa.js executa conferencia, fotos e salvamento. -->
   <script defer src="js/auth.js"></script>
   <script defer src="js/remessa.js?v=20260918-1"></script>
 </body>

@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="css/login.css" />
   </head>
   <body class="login-page">
+    <!-- Cartao central de autenticacao do sistema. -->
     <main class="login-shell">
       <div class="login-card" role="main">
+        <!-- Identidade visual exibida antes do formulario. -->
         <header class="brand" aria-label="AGI Brasil">
           <img class="logo-agi" src="assets/agi-logo.svg" alt="AGI Brasil" />
           <span class="brand-tag">From field to future</span>
         </header>
 
+        <!-- Formulario consumido por js/login.js para autenticar na API. -->
         <form id="loginForm" class="login-form" action="#" method="post" novalidate>
           <div class="field">
             <label for="usuario">USUÁRIO:</label>
@@ -38,12 +41,14 @@
           <button class="submit-btn" type="submit">ENTRAR</button>
         </form>
 
+        <!-- Atalho para novos usuarios comuns criarem acesso. -->
         <div class="register-link-wrap">
           <a class="register-link" href="cadastro.html">Criar usuário</a>
         </div>
       </div>
     </main>
 
+    <!-- auth.js aplica regras globais de sessao; login.js trata o formulario desta tela. -->
     <script defer src="js/auth.js"></script>
     <script defer src="js/login.js"></script>
   </body>

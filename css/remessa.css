@@ -1,15 +1,23 @@
+/*
+  Estilos da conferencia operacional (remessa.html).
+  Define cards de resumo, busca de remessa, formulario de peca, tabela e modal.
+*/
+
+/* *: Padroniza o calculo de tamanho dos elementos para evitar estouro de layout. */
 * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
+        /* body: Define base da pagina, altura, espacamento, fonte, cores e fundo. */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f6f8;
             color: #333;
         }
 
+        /* .pagina-remessa .cabecalho-operador: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-remessa .cabecalho-operador {
             position: relative;
             min-height: 84px;
@@ -18,12 +26,14 @@
             color: #fff;
         }
 
+        /* .pagina-remessa .identidade-sistema: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-remessa .identidade-sistema {
             display: flex;
             width: 100%;
             justify-content: center;
         }
 
+        /* .pagina-remessa .logo-agi: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-remessa .logo-agi {
             display: block;
             width: min(304px, 100%);
@@ -32,6 +42,7 @@
             object-fit: contain;
         }
 
+        /* .pagina-remessa .usuario-operador: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-remessa .usuario-operador {
             position: absolute;
             top: 12px;
@@ -43,24 +54,28 @@
             font-size: 14px;
         }
 
+        /* .pagina-remessa .usuario-operador a: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-remessa .usuario-operador a {
             color: #056331;
             font-weight: bold;
             text-decoration: none;
         }
 
+        /* .container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .container {
             width: 90%;
             max-width: 1200px;
             margin: 40px auto;
         }
 
+        /* .pagina-remessa > .container > #botaoVoltarImportar: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-remessa > .container > #botaoVoltarImportar {
             display: block;
             width: max-content;
             margin-left: max(0px, calc((100% - 760px) / 2));
         }
 
+        /* .botao-voltar: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-voltar {
             display: inline-block;
             margin-bottom: 18px;
@@ -69,10 +84,12 @@
             text-decoration: none;
         }
 
+        /* .botao-voltar:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-voltar:hover {
             text-decoration: underline;
         }
 
+        /* .pagina-remessa > .container > h1, .pagina-remessa > .container > .subtitulo: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
         .pagina-remessa > .container > h1,
         .pagina-remessa > .container > .subtitulo {
             width: min(100%, 760px);
@@ -80,15 +97,18 @@
             margin-left: auto;
         }
 
+        /* h1: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
         h1 {
             margin-bottom: 8px;
         }
 
+        /* .subtitulo: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
         .subtitulo {
             color: #666;
             margin-bottom: 25px;
         }
 
+        /* .selecao-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .selecao-remessa {
             width: min(100%, 760px);
             margin: 35px auto;
@@ -98,10 +118,12 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
+        /* .selecao-remessa h2: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .selecao-remessa h2 {
             margin-bottom: 12px;
         }
 
+        /* .modal-remessa: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .modal-remessa {
             position: fixed;
             inset: 0;
@@ -112,10 +134,12 @@
             background: rgba(15, 23, 42, 0.58);
         }
 
+        /* .modal-remessa[hidden]: Esconde o elemento quando ele nao deve aparecer na tela. */
         .modal-remessa[hidden] {
             display: none;
         }
 
+        /* .modal-remessa-conteudo: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .modal-remessa-conteudo {
             position: relative;
             width: min(100%, 440px);
@@ -126,17 +150,20 @@
             text-align: center;
         }
 
+        /* .modal-remessa-conteudo h2: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .modal-remessa-conteudo h2 {
             margin-bottom: 12px;
             color: #1e3a8a;
         }
 
+        /* .modal-remessa-conteudo p: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .modal-remessa-conteudo p {
             margin-bottom: 22px;
             color: #475569;
             line-height: 1.5;
         }
 
+        /* .fechar-modal: Controla a janela modal, sobreposicao e conteudo exibido acima da tela. */
         .fechar-modal {
             position: absolute;
             top: 10px;
@@ -152,6 +179,7 @@
             cursor: pointer;
         }
 
+        /* .botao-consultar-concluida: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-consultar-concluida {
             display: inline-block;
             min-height: 44px;
@@ -163,14 +191,17 @@
             text-decoration: none;
         }
 
+        /* .botao-consultar-concluida:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-consultar-concluida:hover {
             background: #056331;
         }
 
+        /* .busca-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .busca-remessa {
             display: block;
         }
 
+        /* .busca-remessa input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .busca-remessa input {
             display: block;
             width: 100%;
@@ -180,6 +211,7 @@
             font-size: 16px;
         }
 
+        /* .acoes-busca: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .acoes-busca {
             display: flex;
             align-items: center;
@@ -188,6 +220,7 @@
             margin-top: 10px;
         }
 
+        /* .busca-remessa button: Define aparencia, tamanho e estados dos botoes de acao. */
         .busca-remessa button {
             flex: 0 0 auto;
             padding: 12px 16px;
@@ -198,16 +231,19 @@
             cursor: pointer;
         }
 
+        /* .acoes-busca .botao-voltar-importacao: Define aparencia, tamanho e estados dos botoes de acao. */
         .acoes-busca .botao-voltar-importacao {
             margin: 0;
         }
 
+        /* .remessas-recentes: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .remessas-recentes {
             margin-top: 18px;
             padding-top: 15px;
             border-top: 1px dashed #cbd5e1;
         }
 
+        /* .titulo-recentes: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .titulo-recentes {
             display: block;
             margin-bottom: 8px;
@@ -216,12 +252,14 @@
             color: #64748b;
         }
 
+        /* .lista-recentes: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .lista-recentes {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
 
+        /* .btn-remessa-recente: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-remessa-recente {
             display: inline-flex;
             align-items: center;
@@ -237,6 +275,7 @@
             transition: all 0.2s ease;
         }
 
+        /* .btn-remessa-recente:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         .btn-remessa-recente:hover {
             background: #08783d;
             border-color: #08783d;
@@ -245,8 +284,9 @@
             box-shadow: 0 2px 5px rgba(8, 120, 61, 0.25);
         }
 
-        /* Informações da remessa */
+        /* Informacoes da remessa */
 
+        /* .informacoes: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .informacoes {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -254,6 +294,7 @@
             margin-bottom: 25px;
         }
 
+        /* .card: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .card {
             background: white;
             padding: 20px;
@@ -261,6 +302,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
+        /* .card span: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .card span {
             display: block;
             color: #777;
@@ -268,12 +310,14 @@
             margin-bottom: 8px;
         }
 
+        /* .card strong: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .card strong {
             font-size: 24px;
         }
 
-        /* Área de conferência */
+        /* Area de conferencia */
 
+        /* .conferencia: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .conferencia {
             background: white;
             padding: 25px;
@@ -282,10 +326,12 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
+        /* .conferencia h2: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .conferencia h2 {
             margin-bottom: 15px;
         }
 
+        /* .botao-camera: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-camera {
             background-color: #222;
             color: white;
@@ -296,21 +342,25 @@
             font-size: 16px;
         }
 
+        /* .botao-camera:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-camera:hover {
             background-color: #444;
         }
 
+        /* .leitura-manual: Define layout, espacamento e aparencia visual deste seletor. */
         .leitura-manual {
             display: block;
             margin: 16px 0;
         }
 
+        /* .leitura-manual label: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .leitura-manual label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
         }
 
+        /* .leitura-manual input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .leitura-manual input {
             flex: 1;
             min-width: 0;
@@ -320,37 +370,60 @@
             font-size: 16px;
         }
 
+        /* .leitura-manual button, .camera-area button: Define aparencia, tamanho e estados dos botoes de acao. */
         .leitura-manual button, .camera-area button { padding: 12px 16px; border: 0; border-radius: 6px; background: #08783d; color: #fff; cursor: pointer; }
 
+        /* .campo-com-acao: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .campo-com-acao {
             display: flex;
             width: 100%;
             gap: 10px;
         }
 
+        /* .campo-com-acao button: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .campo-com-acao button { white-space: nowrap; }
+        /* .resultado-codigo: Define layout, espacamento e aparencia visual deste seletor. */
         .resultado-codigo { min-height: 20px; text-align: left; }
+        /* .quantidade-conferencia: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .quantidade-conferencia { display: flex; align-items: end; gap: 12px; margin: 18px 0; }
+        /* .quantidade-conferencia label, .evidencia-conferencia .rotulo-fotos: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .quantidade-conferencia label, .evidencia-conferencia .rotulo-fotos { font-weight: bold; }
+        /* .quantidade-conferencia input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .quantidade-conferencia input { width: 180px; padding: 12px; border: 1px solid #bbb; border-radius: 6px; font-size: 16px; }
+        /* #limiteQuantidade: Define layout, espacamento e aparencia visual deste seletor. */
         #limiteQuantidade { color: #666; font-size: 14px; }
+        /* .evidencia-conferencia: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .evidencia-conferencia { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+        /* .botao-adicionar-foto: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-adicionar-foto { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 6px; background: #08783d; color: #fff; cursor: pointer; font-weight: bold; }
+        /* .botao-adicionar-foto > span:first-child: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-adicionar-foto > span:first-child { font-size: 21px; line-height: 16px; }
+        /* .botao-adicionar-foto input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .botao-adicionar-foto input { display: none; }
+        /* .fotos-conferencia: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .fotos-conferencia { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+        /* .botao-enviar: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-enviar { width: auto; min-width: 180px; padding: 13px 20px; margin-top: 8px; border: 0; border-radius: 6px; background: #15803d; color: #fff; font-size: 16px; cursor: pointer; }
+        /* .botao-enviar:disabled: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-enviar:disabled { background: #aaa; cursor: not-allowed; }
+        /* .mensagem: Define cores e destaque para mensagens, status e indicadores do processo. */
         .mensagem { margin-top: 14px; color: #166534; }
+        /* .mensagem.erro: Define cores e destaque para mensagens, status e indicadores do processo. */
         .mensagem.erro { color: #b91c1c; }
+        /* .aviso-sem-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .aviso-sem-remessa { margin: 16px 0; padding: 14px; background: #fff7ed; color: #9a3412; border: 1px solid #fdba74; border-radius: 6px; text-align: left; }
+        /* .aviso-sem-remessa a: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .aviso-sem-remessa a { color: #056331; font-weight: bold; }
+        /* .camera-area: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .camera-area { margin-top: 16px; max-width: 480px; }
+        /* .camera-area video: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .camera-area video { width: 100%; background: #111; border-radius: 8px; }
+        /* .camera-area button: Define aparencia, tamanho e estados dos botoes de acao. */
         .camera-area button { margin-top: 8px; background: #444; }
 
         /* Tabela */
 
+        /* .tabela-container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
         .tabela-container {
             background: white;
             padding: 25px;
@@ -359,12 +432,14 @@
             overflow-x: auto;
         }
 
+        /* table: Define visual e espacamento da tabela de pecas. */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
         }
 
+        /* th, td: Define visual e espacamento da tabela de pecas. */
         th,
         td {
             padding: 14px;
@@ -372,25 +447,30 @@
             border-bottom: 1px solid #ddd;
         }
 
+        /* th: Define visual e espacamento da tabela de pecas. */
         th {
             background-color: #f1f1f1;
         }
 
+        /* .pendente: Define cores e destaque para mensagens, status e indicadores do processo. */
         .pendente {
             color: #c62828;
             font-weight: bold;
         }
 
+        /* .parcial: Define cores e destaque para mensagens, status e indicadores do processo. */
         .parcial {
             color: #ef8f00;
             font-weight: bold;
         }
 
+        /* .conferida: Define cores e destaque para mensagens, status e indicadores do processo. */
         .conferida {
             color: #2e7d32;
             font-weight: bold;
         }
 
+        /* .botao-fotos: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-fotos {
             display: inline-block;
             padding: 8px 10px;
@@ -402,11 +482,13 @@
             white-space: nowrap;
         }
 
+        /* .botao-fotos:has(input:disabled): Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
         .botao-fotos:has(input:disabled) {
             background: #64748b;
             cursor: not-allowed;
         }
 
+        /* button, .botao-camera, .botao-adicionar-foto, .botao-enviar, .botao-fotos, .botao-voltar, .botao-selecionar-remessa, .leitura-manual butt...: Define aparencia, tamanho e estados dos botoes de acao. */
         button,
         .botao-camera,
         .botao-adicionar-foto,
@@ -427,6 +509,7 @@
             font-weight: bold;
         }
 
+        /* button:hover, .botao-camera:hover, .botao-adicionar-foto:hover, .botao-enviar:hover, .botao-fotos:hover, .botao-voltar:hover, .busca-reme...: Define aparencia, tamanho e estados dos botoes de acao. */
         button:hover,
         .botao-camera:hover,
         .botao-adicionar-foto:hover,
@@ -437,10 +520,12 @@
             background: #056331;
         }
 
+        /* .entrada-fotos: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .entrada-fotos {
             display: none;
         }
 
+        /* .miniaturas-evidencia: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .miniaturas-evidencia {
             display: flex;
             flex-wrap: wrap;
@@ -448,6 +533,7 @@
             margin-top: 8px;
         }
 
+        /* .miniatura-evidencia: Controla exibicao de fotos, evidencias, camera e miniaturas. */
         .miniatura-evidencia {
             width: 42px;
             height: 42px;
@@ -456,8 +542,9 @@
             border: 1px solid #cbd5e1;
         }
 
-        /* Botão finalizar */
+        /* Botao finalizar */
 
+        /* .acoes-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
         .acoes-remessa {
             display: flex;
             align-items: center;
@@ -465,6 +552,7 @@
             margin-top: 25px;
         }
 
+        /* .botao-selecionar-remessa: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-selecionar-remessa {
             flex: 1 1 0;
             display: inline-block;
@@ -478,41 +566,50 @@
             text-decoration: none;
         }
 
+        /* .botao-selecionar-remessa:hover: Define aparencia, tamanho e estados dos botoes de acao. */
         .botao-selecionar-remessa:hover {
             background-color: #056331;
             text-decoration: none;
         }
 
+        /* @media (max-width: 700px): Ajusta as regras internas para telas menores e melhora a responsividade. */
         @media (max-width: 700px) {
 
+            /* body: Define base da pagina, altura, espacamento, fonte, cores e fundo. */
             body {
                 font-size: 15px;
             }
 
-            /* Interface operacional inspirada no fluxo mobile de conferência. */
+            /* Interface operacional inspirada no fluxo mobile de conferencia. */
+            /* .pagina-remessa: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa {
                 min-height: 100vh;
                 background: #eef0f0;
             }
 
+            /* .pagina-remessa .container: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .container {
                 width: min(100% - 32px, 980px);
                 margin: 28px auto 48px;
             }
 
+            /* .pagina-remessa > .container > h1, .pagina-remessa > .container > .subtitulo: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa > .container > h1,
             .pagina-remessa > .container > .subtitulo {
                 width: 100%;
             }
 
+            /* .pagina-remessa h1: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa h1 {
                 color: #172026;
             }
 
+            /* .pagina-remessa .subtitulo: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .subtitulo {
                 color: #59656b;
             }
 
+            /* .pagina-remessa .selecao-remessa, .pagina-remessa .conferencia, .pagina-remessa .tabela-container, .pagina-remessa .card: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .selecao-remessa,
             .pagina-remessa .conferencia,
             .pagina-remessa .tabela-container,
@@ -521,10 +618,12 @@
                 box-shadow: none;
             }
 
+            /* .pagina-remessa .selecao-remessa: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .selecao-remessa {
                 border: 1px solid #d9dddd;
             }
 
+            /* .pagina-remessa .botao-voltar-importacao: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .botao-voltar-importacao {
                 display: block;
                 width: 100%;
@@ -533,12 +632,14 @@
                 text-decoration: none;
             }
 
+            /* .pagina-remessa > .container > #botaoVoltarImportar: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa > .container > #botaoVoltarImportar {
                 width: 100%;
                 margin-left: 0;
                 text-align: center;
             }
 
+            /* .pagina-remessa button, .pagina-remessa .botao-adicionar-foto, .pagina-remessa .botao-enviar, .pagina-remessa .botao-voltar, .pagina-reme...: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa button,
             .pagina-remessa .botao-adicionar-foto,
             .pagina-remessa .botao-enviar,
@@ -552,6 +653,7 @@
                 border-radius: 5px;
             }
 
+            /* .pagina-remessa button:hover, .pagina-remessa .botao-adicionar-foto:hover, .pagina-remessa .botao-enviar:hover, .pagina-remessa .botao-vo...: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa button:hover,
             .pagina-remessa .botao-adicionar-foto:hover,
             .pagina-remessa .botao-enviar:hover,
@@ -564,20 +666,24 @@
                 background: #056331;
             }
 
+            /* .pagina-remessa input: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa input {
                 min-height: 48px;
                 border-color: #c8cece;
                 border-radius: 5px;
             }
 
+            /* .pagina-remessa .informacoes: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .informacoes {
                 gap: 10px;
             }
 
+            /* .pagina-remessa .card: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .card {
                 border: 1px solid #d9dddd;
             }
 
+            /* .pagina-remessa .conferencia h2, .pagina-remessa .tabela-container h2: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
             .pagina-remessa .conferencia h2,
             .pagina-remessa .tabela-container h2 {
                 color: #172026;
@@ -585,52 +691,63 @@
 
 
 
+            /* .informacoes: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
             .informacoes {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 10px;
             }
 
+            /* .container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
             .container {
                 width: 95%;
                 margin: 20px auto;
             }
 
+            /* h1: Define apresentacao de textos, titulos, links e informacoes auxiliares. */
             h1 {
                 font-size: 28px;
             }
 
+            /* .card: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
             .card {
                 padding: 14px;
             }
 
+            /* .card strong: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
             .card strong {
                 font-size: 19px;
                 overflow-wrap: anywhere;
             }
 
+            /* .conferencia, .tabela-container: Define bloco de conteudo, largura, espacamento, bordas e aparencia de cartao. */
             .conferencia,
             .tabela-container {
                 padding: 16px;
             }
 
+            /* .botao-camera: Define aparencia, tamanho e estados dos botoes de acao. */
             .botao-camera {
                 width: 100%;
                 margin-top: 8px;
             }
 
+            /* .selecao-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
             .selecao-remessa {
                 padding: 16px;
             }
 
+            /* .busca-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
             .busca-remessa {
                 display: block;
             }
 
+            /* .busca-remessa input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
             .busca-remessa input {
                 width: 100%;
                 margin-top: 8px;
             }
 
+            /* .acoes-busca: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
             .acoes-busca {
                 display: flex;
                 flex-direction: column;
@@ -638,6 +755,7 @@
                 gap: 8px;
             }
 
+            /* .acoes-busca button, .acoes-busca .botao-voltar-importacao: Define aparencia, tamanho e estados dos botoes de acao. */
             .acoes-busca button,
             .acoes-busca .botao-voltar-importacao {
                 width: 100%;
@@ -645,6 +763,7 @@
                 text-align: center;
             }
 
+            /* th, td: Define visual e espacamento da tabela de pecas. */
             th,
             td {
                 padding: 10px;
@@ -652,26 +771,36 @@
                 vertical-align: top;
             }
 
+            /* table: Define visual e espacamento da tabela de pecas. */
             table {
                 min-width: 900px;
             }
 
+            /* .leitura-manual: Define layout, espacamento e aparencia visual deste seletor. */
             .leitura-manual { display: block; }
+            /* .leitura-manual input, .leitura-manual button: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
             .leitura-manual input, .leitura-manual button { width: 100%; margin-top: 8px; }
+            /* .campo-com-acao: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
             .campo-com-acao { display: block; }
+            /* .quantidade-conferencia: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
             .quantidade-conferencia { display: block; }
+            /* .quantidade-conferencia input: Ajusta campos de formulario, rotulos, entradas de texto, arquivo e senha. */
             .quantidade-conferencia input { width: 100%; margin-top: 8px; }
+            /* .botao-enviar: Define aparencia, tamanho e estados dos botoes de acao. */
             .botao-enviar { width: 100%; }
 
+            /* .acoes-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
             .acoes-remessa {
                 width: 100%;
             }
 
+            /* .acoes-remessa: Organiza blocos de busca, remessas, pecas e fluxo de conferencia. */
             .acoes-remessa {
                 align-items: stretch;
                 flex-direction: column;
             }
 
+            /* .botao-selecionar-remessa: Define aparencia, tamanho e estados dos botoes de acao. */
             .botao-selecionar-remessa {
                 display: block;
                 width: 100%;
@@ -679,7 +808,9 @@
             }
         }
 
+/* @media (max-width: 700px): Ajusta as regras internas para telas menores e melhora a responsividade. */
 @media (max-width: 700px) {
+    /* .pagina-remessa .cabecalho-operador: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
     .pagina-remessa .cabecalho-operador {
         position: relative;
         display: flex;
@@ -688,6 +819,7 @@
         padding: 12px 16px 14px;
     }
 
+    /* .pagina-remessa .usuario-operador: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
     .pagina-remessa .usuario-operador {
         position: static;
         order: -1;
@@ -697,6 +829,7 @@
         font-size: 13px;
     }
 
+    /* .pagina-remessa .identidade-sistema: Define o layout geral da pagina e centraliza/organiza o conteudo principal. */
     .pagina-remessa .identidade-sistema {
         width: 100%;
     }
